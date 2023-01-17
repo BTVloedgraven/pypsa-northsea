@@ -19,6 +19,14 @@ gurobi.log
 /data
 /data/links_p_nom.csv
 /cutouts
+/env
+/envs
+/logs
+/doc
+/.reuse
+/.github
+/data/shipdensity_global.zip
+/data/bundle
 /dask-worker-space
 
 doc/_build
