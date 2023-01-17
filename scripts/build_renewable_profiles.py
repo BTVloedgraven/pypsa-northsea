@@ -353,8 +353,13 @@ if __name__ == "__main__":
         if tech.endswith!= "float":
             with xr.open_dataset(snakemake.input.gebco) as gebco:
                 from rasterio.warp import Resampling
-                gebco=gebco.rename({"lon":"x", "lat":"y"})
-                water_depth=atlite.gis.regrid(gebco.elevation,cutout.data.x, cutout.data.y,resampling=Resampling.average)
+                gebco=gebco.rename({"lon":"x", "lat":"y"})   
+                elevation = gebco.elevation
+                elevation = elevation.where(elevation.x>=min(cutout.data.x), drop=True)
+                elevation = elevation.where(elevation.x<=max(cutout.data.x), drop=True)
+                elevation = elevation.where(elevation.y>=min(cutout.data.y), drop=True)
+                elevation = elevation.where(elevation.y<=max(cutout.data.y), drop=True)
+                water_depth=atlite.gis.regrid(elevation,cutout.data.x, cutout.data.y,resampling=Resampling.average)
                 water_depth=(water_depth*availability.where(availability!=0)).mean(["x", "y"])
                 ds['water_depth'] = xr.DataArray(water_depth, [buses]).fillna(0).clip(max=0)
         logger.info('Calculate underwater fraction of connections.')
