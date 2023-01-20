@@ -64,6 +64,8 @@ rule solve_all_networks:
             **config["scenario"]
         ),
 
+rule plot_all_networks:
+    input: expand(["results/plots/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
 
 if config["enable"].get("prepare_links_p_nom", False):
 
@@ -502,6 +504,8 @@ rule build_offshore_grid:
         busmap_cluster="resources/" + RDIR + "busmap_elec_s{simpl}_{clusters}.csv",
         busmap_simpl="resources/" + RDIR + "busmap_elec_s.csv",
         clustered_network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
+        simplified_network="networks/" + RDIR + "elec_s{simpl}.nc",
+        north_sea_shape="resources/" + RDIR + "north_sea.geojson",
         tech_costs=COSTS,
     output:
         network="networks/" + RDIR + "elec_s{simpl}_{clusters}_off-{offgrid}.nc",

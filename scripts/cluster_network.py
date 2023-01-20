@@ -466,6 +466,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
+    n.buses.to_csv('buses.csv')
 
     focus_weights = snakemake.config.get("focus_weights", None)
 

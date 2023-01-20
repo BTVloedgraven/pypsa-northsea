@@ -239,6 +239,7 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
     n = pypsa.Network(snakemake.input.clustered_network)
+    n_simpl = pypsa.Network(snakemake.input.simplified_network)
 
     offgrid = snakemake.wildcards["offgrid"]
     if not offgrid:
@@ -266,12 +267,12 @@ if __name__ == "__main__":
         )
 
         offshore_generators = (
-            n.generators.filter(regex="offwind", axis=0)
+            n_simpl.generators.filter(regex="offwind", axis=0)
             .loc[:, ["p_nom_max", "bus"]]
             .copy()
         )
         offshore_generators["cf"] = (
-            n.generators_t.p_max_pu.loc[:, offshore_generators.index]
+            n_simpl.generators_t.p_max_pu.loc[:, offshore_generators.index]
             .mul(n.snapshot_weightings.generators, axis=0)
             .sum()
             / 8760
@@ -279,13 +280,15 @@ if __name__ == "__main__":
         offshore_generators["regions"] = offshore_generators.index.str.replace(
             " offwind-\w+", "", regex=True
         )
+        busmap = gpd.read_file(snakemake.input.busmap_cluster).loc[:, ['name', 'busmap']].rename(columns={"name": "regions", "busmap":"bus"})
         offshore_generators = offshore_generators.groupby("regions").agg(
-            {"p_nom_max": np.sum, "cf": np.mean, "bus": consense}
+            {"p_nom_max": np.sum, "cf": np.mean}
         )
+        offshore_generators = offshore_generators.merge(busmap, on='regions')
 
         # offshore regions have more shapes than offshore generators have, don't know why, maybe rerun build renewable and add electricity and check again
         offshore_regions = offshore_regions.merge(
-            offshore_generators, right_index=True, left_on="name"
+            offshore_generators, right_on="regions", left_on="name"
         ).set_index("name")
 
         # calculate distance to offshore region
@@ -307,7 +310,7 @@ if __name__ == "__main__":
         ]
 
         if snakemake.config["offshore_grid"]["sea_region"]:
-            sea_shape = gpd.read_file(snakemake.config["offshore_grid"]["sea_region"])
+            sea_shape = gpd.read_file(snakemake.input.north_sea_shape)
             offshore_regions = offshore_regions[
                 offshore_regions.intersects(sea_shape.geometry.unary_union)
             ]
