@@ -280,7 +280,7 @@ if __name__ == "__main__":
         offshore_generators["regions"] = offshore_generators.index.str.replace(
             " offwind-\w+", "", regex=True
         )
-        busmap = gpd.read_file(snakemake.input.busmap_cluster).loc[:, ['name', 'busmap']].rename(columns={"name": "regions", "busmap":"bus"})
+        busmap = gpd.read_file(snakemake.input.busmap_cluster).loc[:, ['Bus', 'busmap']].rename(columns={"Bus": "regions", "busmap":"bus"})
         offshore_generators = offshore_generators.groupby("regions").agg(
             {"p_nom_max": np.sum, "cf": np.mean}
         )

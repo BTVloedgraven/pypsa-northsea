@@ -67,6 +67,14 @@ rule solve_all_networks:
 rule plot_all_networks:
     input: expand(["results/plots/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
 
+rule make_all_summaries:
+    input: expand(["results/summaries/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{country}"], country='NL', **config['scenario'])
+
+rule build_bus_regions_test:
+    input:
+        regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
+        regions_offshore="resources/" + RDIR + "regions_offshore.geojson",
+
 if config["enable"].get("prepare_links_p_nom", False):
 
     rule prepare_links_p_nom:
@@ -206,7 +214,7 @@ rule build_shapes:
 rule build_bus_regions:
     input:
         country_shapes="resources/" + RDIR + "country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
+        offshore_shapes="resources/" + RDIR + "meshed_offshore_shapes.geojson",
         base_network="networks/" + RDIR + "base.nc",
     output:
         regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
@@ -217,7 +225,7 @@ rule build_bus_regions:
     resources:
         mem_mb=1000,
     script:
-        "scripts/build_bus_regions.py"
+        "scripts/build_bus_regions_Bram.py"
 
 
 if config["enable"].get("build_cutout", False):

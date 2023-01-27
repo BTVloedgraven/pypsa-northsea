@@ -186,7 +186,7 @@ def get_feature_for_hac(n, buses_i=None, feature=None):
     if "offwind" in carriers:
         carriers.remove("offwind")
         carriers = np.append(
-            carriers, network.generators.carrier.filter(like="offwind").unique()
+            carriers, n.generators.carrier.filter(like="offwind").unique()
         )
 
     if feature.split("-")[1] == "cap":
