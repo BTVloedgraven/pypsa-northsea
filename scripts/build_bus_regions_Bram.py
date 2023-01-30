@@ -164,6 +164,16 @@ if __name__ == "__main__":
                         "country": offshore_shape.country
                     }, index = pd.Index([offshore_shape.name], dtype='object', name='Bus')
                 )
+                n.madd(
+                    "Bus",
+                    names=[offshore_shape.name],
+                    v_nom=220,
+                    x=offshore_shape.x,
+                    y=offshore_shape.y,
+                    substation_lv=False,
+                    substation_off=True,
+                    country=offshore_shape.country,
+                )
             else:
                 offshore_regions_c = gpd.GeoDataFrame(
                     {
@@ -186,3 +196,6 @@ if __name__ == "__main__":
         )
     else:
         offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)
+
+    # n.meta = snakemake.config
+    n.export_to_netcdf(snakemake.output.network)

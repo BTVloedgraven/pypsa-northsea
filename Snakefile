@@ -176,7 +176,7 @@ rule base_network:
         offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
         europe_shape="resources/" + RDIR + "europe_shape.geojson",
     output:
-        "networks/" + RDIR + "base.nc",
+        "networks/" + RDIR + "base0.nc",
     log:
         "logs/" + RDIR + "base_network.log",
     benchmark:
@@ -216,10 +216,11 @@ rule build_bus_regions:
         country_shapes="resources/" + RDIR + "country_shapes.geojson",
         offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
         meshed_offshore_shapes="resources/" + RDIR + "meshed_offshore_shapes.geojson",
-        base_network="networks/" + RDIR + "base.nc",
+        base_network="networks/" + RDIR + "base0.nc",
     output:
         regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
         regions_offshore="resources/" + RDIR + "regions_offshore.geojson",
+        network="networks/" + RDIR + "base.nc",
     log:
         "logs/" + RDIR + "build_bus_regions.log",
     threads: 1
