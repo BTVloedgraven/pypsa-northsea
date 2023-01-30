@@ -214,7 +214,8 @@ rule build_shapes:
 rule build_bus_regions:
     input:
         country_shapes="resources/" + RDIR + "country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "meshed_offshore_shapes.geojson",
+        offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
+        meshed_offshore_shapes="resources/" + RDIR + "meshed_offshore_shapes.geojson",
         base_network="networks/" + RDIR + "base.nc",
     output:
         regions_onshore="resources/" + RDIR + "regions_onshore.geojson",

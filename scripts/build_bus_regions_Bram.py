@@ -74,10 +74,10 @@ def voronoi_partition_pts(points, outline):
                 (
                     points,
                     [
-                        [xmin - 100.0 * xspan, ymin - 100.0 * yspan],
-                        [xmin - 100.0 * xspan, ymax + 100.0 * yspan],
-                        [xmax + 100.0 * xspan, ymin - 100.0 * yspan],
-                        [xmax + 100.0 * xspan, ymax + 100.0 * yspan],
+                        [xmin - 100, ymin - 100],
+                        [xmin - 100, ymax + 100],
+                        [xmax + 100, ymin - 100],
+                        [xmax + 100, ymax + 100],
                     ],
                 )
             )
@@ -95,6 +95,13 @@ def voronoi_partition_pts(points, outline):
 
     return polygons
 
+def assign_offshore_region(x, y, offshore_regions):
+    region = offshore_regions.loc[offshore_regions.contains(Point(x, y))].index
+    if not region.empty:
+        return region[0]
+    offshore_regions['distance'] = offshore_regions.apply(lambda reg: gpd.GeoSeries(Point(x,y)).distance(reg.geometry, align=False), axis=1)
+    region = offshore_regions['distance'].idxmin()
+    return region
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -111,7 +118,11 @@ if __name__ == "__main__":
         "geometry"
     ]
     offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
-    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")
+    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")[
+        "geometry"
+    ]
+    meshed_offshore_shapes = gpd.read_file(snakemake.input.meshed_offshore_shapes)
+    meshed_offshore_shapes = meshed_offshore_shapes.reindex(columns=REGION_COLS).set_index("name")
 
     onshore_regions = []
     offshore_regions = []
@@ -135,31 +146,36 @@ if __name__ == "__main__":
             )
         )
 
-    for index_shape, offshore_shape in offshore_shapes.iterrows():
-        c_b = n.buses.apply(lambda bus: offshore_shape.geometry.contains(Point(bus.x, bus.y)), axis=1)
+    for country in countries:
+        meshed_shapes = meshed_offshore_shapes.loc[meshed_offshore_shapes.country == country]
+        c_b = n.buses.country == country
         offshore_locs = n.buses.loc[c_b & n.buses.substation_off, ["x", "y"]]
-        if offshore_locs.empty:
-            offshore_regions_c = gpd.GeoDataFrame(
-                {
-                    "name": offshore_shape.name,
-                    "x": offshore_shape.x,
-                    "y": offshore_shape.y,
-                    "geometry": [offshore_shape.geometry],
-                    "country": offshore_shape.country
-                }, index = pd.Index([offshore_shape.name], dtype='object', name='Bus')
-            )
-        else:
-            offshore_regions_c = gpd.GeoDataFrame(
-                {
-                    "name": offshore_locs.index,
-                    "x": offshore_locs["x"],
-                    "y": offshore_locs["y"],
-                    "geometry": voronoi_partition_pts(offshore_locs.values, offshore_shape.geometry),
-                    "country": offshore_shape.country,
-                }
-            )
-        #offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
-        offshore_regions.append(offshore_regions_c)
+        offshore_region_bus = offshore_locs.apply(lambda bus: assign_offshore_region(bus.x, bus.y, meshed_shapes), axis=1)
+        for index_shape, offshore_shape in meshed_shapes.iterrows():
+            r_b = offshore_region_bus == index_shape
+            offshore_locs = n.buses.loc[offshore_region_bus.loc[r_b].index, ["x", "y"]]
+            if offshore_locs.empty:
+                offshore_regions_c = gpd.GeoDataFrame(
+                    {
+                        "name": offshore_shape.name,
+                        "x": offshore_shape.x,
+                        "y": offshore_shape.y,
+                        "geometry": [offshore_shape.geometry],
+                        "country": offshore_shape.country
+                    }, index = pd.Index([offshore_shape.name], dtype='object', name='Bus')
+                )
+            else:
+                offshore_regions_c = gpd.GeoDataFrame(
+                    {
+                        "name": offshore_locs.index,
+                        "x": offshore_locs["x"],
+                        "y": offshore_locs["y"],
+                        "geometry": voronoi_partition_pts(offshore_locs.values, offshore_shape.geometry),
+                        "country": offshore_shape.country,
+                    }
+                )
+            offshore_regions_c = offshore_regions_c[offshore_regions_c.geometry.is_empty == False]
+            offshore_regions.append(offshore_regions_c)
 
     pd.concat(onshore_regions, ignore_index=True).to_file(
         snakemake.output.regions_onshore
