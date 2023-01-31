@@ -5,27 +5,11 @@ from sklearn.cluster import KMeans
 from scipy.spatial import Voronoi
 import numpy as np
 import pandas as pd
-
-offshore_shapes = gpd.read_file('resources/offshore_shapes.geojson')
-north_sea_shape = gpd.read_file('resources/north_sea.geojson')
-offshore_shapes_north_sea = gpd.GeoDataFrame.copy(offshore_shapes)
-offshore_shapes_north_sea['geometry'] = offshore_shapes_north_sea.intersection(north_sea_shape.geometry.unary_union, align=True)
-offshore_shapes_rest = gpd.GeoDataFrame.copy(offshore_shapes)
-offshore_shapes_rest['geometry'] = offshore_shapes.difference(north_sea_shape.geometry.unary_union, align=True)
-c = offshore_shapes_rest.geometry.is_empty
-offshore_shapes_rest = offshore_shapes_rest.drop(offshore_shapes_rest.loc[c].index)
+from _helpers import REGION_COLS, configure_logging
 
 def calculate_area(shape, ellipsoid="WGS84"):
     geod = Geod(ellps=ellipsoid)
     return abs(geod.geometry_area_perimeter(shape)[0]) / 1e6
-
-countries = ['NL','DE','BE','DK','NO','GB']
-offshore_shapes_north_sea['area'] = offshore_shapes_north_sea.geometry.map(
-    lambda x: calculate_area(x)
-)
-
-offshore_shapes_north_sea = offshore_shapes_north_sea.set_index("name")
-offshore_shapes_rest = offshore_shapes_rest.set_index("name")
 
 def fill_shape_with_points(shape, num=50):
     """
@@ -167,33 +151,56 @@ def build_voronoi_cells(shape, points):
     )
     return regions
 
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
 
+        snakemake = mock_snakemake("mesh_offshore_region")
+    configure_logging(snakemake)
 
-threshold_area = 5000 #km2
-offshore_regions = []
+    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
+    offshore_region = gpd.read_file(snakemake.input.offshore_region)
+    offshore_shapes_sea = gpd.GeoDataFrame.copy(offshore_shapes)
+    offshore_shapes_sea['geometry'] = offshore_shapes_sea.intersection(offshore_region.geometry.unary_union, align=True)
+    offshore_shapes_rest = gpd.GeoDataFrame.copy(offshore_shapes)
+    offshore_shapes_rest['geometry'] = offshore_shapes.difference(offshore_region.geometry.unary_union, align=True)
+    c = offshore_shapes_rest.geometry.is_empty
+    offshore_shapes_rest = offshore_shapes_rest.drop(offshore_shapes_rest.loc[c].index)
 
-for country in countries:
-    shape = offshore_shapes_north_sea.loc[country]
-    inner_points = fill_shape_with_points(shape.geometry)
-    oversize_factor = shape.area/threshold_area
-    n_regions = int(np.ceil(oversize_factor))
-    region_centers = cluster_points(n_regions, inner_points)
-    inner_regions = build_voronoi_cells(shape.geometry, region_centers)
-    if country in offshore_shapes_rest.index:
-        inner_regions = pd.concat([gpd.GeoDataFrame({"geometry": offshore_shapes_rest.loc[country]}), inner_regions], ignore_index=True)
-    inner_regions.set_index(
-        pd.Index([f"off_{country}_{i}" for i in inner_regions.index], name="region"),
-        inplace=True,
+    countries = snakemake.config["countries"]
+
+    offshore_shapes_sea['area'] = offshore_shapes_sea.geometry.map(
+        lambda x: calculate_area(x)
     )
-    inner_regions["name"] = inner_regions.index
-    inner_regions["country"] = country
-    offshore_regions.append(inner_regions)
-    
-offshore_regions = pd.concat(offshore_regions, ignore_index=True)
-centroid = offshore_regions.to_crs(3035).centroid.to_crs(4326)
-offshore_regions["x"] = centroid.x
-offshore_regions["y"] = centroid.y
 
-offshore_regions.plot()
+    offshore_shapes_sea = offshore_shapes_sea.set_index("name")
+    offshore_shapes_rest = offshore_shapes_rest.set_index("name")
 
-offshore_regions.to_file('resources/meshed_offshore_shapes.geojson')
+    threshold_area = snakemake.config["mesh_offshore_region"]["threshold"]
+    offshore_regions = []
+
+    for country in countries:
+        shape = offshore_shapes_sea.loc[country]
+        inner_points = fill_shape_with_points(shape.geometry)
+        oversize_factor = shape.area/threshold_area
+        n_regions = int(np.ceil(oversize_factor))
+        region_centers = cluster_points(n_regions, inner_points)
+        inner_regions = build_voronoi_cells(shape.geometry, region_centers)
+        if country in offshore_shapes_rest.index:
+            inner_regions = pd.concat([gpd.GeoDataFrame({"geometry": offshore_shapes_rest.loc[country]}), inner_regions], ignore_index=True)
+        inner_regions.set_index(
+            pd.Index([f"off_{country}_{i}" for i in inner_regions.index], name="region"),
+            inplace=True,
+        )
+        inner_regions["name"] = inner_regions.index
+        inner_regions["country"] = country
+        offshore_regions.append(inner_regions)
+        
+    offshore_regions = pd.concat(offshore_regions, ignore_index=True)
+    centroid = offshore_regions.to_crs(3035).centroid.to_crs(4326)
+    offshore_regions["x"] = centroid.x
+    offshore_regions["y"] = centroid.y
+
+    offshore_regions.plot()
+
+    offshore_regions.to_file(snakemake.output.meshed_offshore_shapes)

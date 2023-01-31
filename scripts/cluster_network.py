@@ -448,8 +448,10 @@ def cluster_regions(busmaps, input=None, output=None):
         regions_c.to_file(getattr(output, which))
 
 
-def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
-    busmap = busmap_for_n_clusters(n, n_clusters)
+def plot_busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm, feature, fn=None):
+    busmap = busmap_for_n_clusters(
+            n, n_clusters, solver_name, focus_weights, algorithm, feature
+        )
     cs = busmap.unique()
     cr = sns.color_palette("hls", len(cs))
     n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
@@ -564,3 +566,13 @@ if __name__ == "__main__":
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
     cluster_regions((clustering.busmap,), snakemake.input, snakemake.output)
+
+    plot_busmap_for_n_clusters(
+        n,
+        n_clusters,
+        snakemake.config["solving"]["solver"]["name"],
+        focus_weights,
+        cluster_config.get("algorithm", "hac"),
+        cluster_config.get("feature", "solar+onwind-time"),
+        fn='busmap.png'
+    )

@@ -67,8 +67,8 @@ rule solve_all_networks:
 rule plot_all_networks:
     input: expand(["results/plots/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
 
-rule make_all_summaries:
-    input: expand(["results/summaries/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{country}"], country='NL', **config['scenario'])
+rule make_NL_summaries:
+    input: expand(["results/summaries/elec_s{simpl}_{clusters}_off-_ec_l{ll}_{opts}_{country}"], country='NL', **config['scenario'])
 
 rule build_bus_regions_test:
     input:
@@ -149,7 +149,7 @@ rule build_load_data:
 
 rule build_powerplants:
     input:
-        base_network="networks/" + RDIR + "base.nc",
+        base_network="networks/" + RDIR + "base_offshore_buses.nc",
         custom_powerplants="data/custom_powerplants.csv",
     output:
         "resources/" + RDIR + "powerplants.csv",
@@ -176,7 +176,7 @@ rule base_network:
         offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
         europe_shape="resources/" + RDIR + "europe_shape.geojson",
     output:
-        "networks/" + RDIR + "base0.nc",
+        "networks/" + RDIR + "base.nc",
     log:
         "logs/" + RDIR + "base_network.log",
     benchmark:
@@ -210,24 +210,37 @@ rule build_shapes:
     script:
         "scripts/build_shapes.py"
 
+rule mesh_offshore_region:
+    input:
+        offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
+        offshore_region="resources/" + RDIR + "{offshore_region}.geojson".format(offshore_region=config['scenario']['offshore_region']),
+    output:
+        meshed_offshore_shapes="resources/" + RDIR + "offshore_shapes_meshed.geojson",
+    log:
+        "logs/" + RDIR + "mesh_offshore_region.log",
+    threads: 1
+    resources:
+        mem_mb=500,
+    script:
+        "scripts/mesh_offshore_region.py"
 
 rule build_bus_regions:
     input:
         country_shapes="resources/" + RDIR + "country_shapes.geojson",
         offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
-        meshed_offshore_shapes="resources/" + RDIR + "meshed_offshore_shapes.geojson",
-        base_network="networks/" + RDIR + "base0.nc",
+        meshed_offshore_shapes="resources/" + RDIR + "offshore_shapes_meshed.geojson",
+        base_network="networks/" + RDIR + "base.nc",
     output:
         regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
         regions_offshore="resources/" + RDIR + "regions_offshore.geojson",
-        network="networks/" + RDIR + "base.nc",
+        network="networks/" + RDIR + "base_offshore_buses.nc",
     log:
         "logs/" + RDIR + "build_bus_regions.log",
     threads: 1
     resources:
         mem_mb=1000,
     script:
-        "scripts/build_bus_regions_Bram.py"
+        "scripts/build_bus_regions.py"
 
 
 if config["enable"].get("build_cutout", False):
@@ -352,7 +365,7 @@ rule build_ship_raster:
 
 rule build_renewable_profiles:
     input:
-        base_network="networks/" + RDIR + "base.nc",
+        base_network="networks/" + RDIR + "base_offshore_buses.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
         natura=lambda w: (
             "resources/" + RDIR + "natura.tiff"
@@ -427,7 +440,7 @@ rule add_electricity:
             for attr, fn in d.items()
             if str(fn).startswith("data/")
         },
-        base_network="networks/" + RDIR + "base.nc",
+        base_network="networks/" + RDIR + "base_offshore_buses.nc",
         tech_costs=COSTS,
         regions="resources/" + RDIR + "regions_onshore.geojson",
         powerplants="resources/" + RDIR + "powerplants.csv",
@@ -699,7 +712,7 @@ def input_make_summary(w):
     return [COSTS] + expand(
         "results/networks/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.nc",
+        + "elec_s{simpl}_{clusters}_off-_ec_l{ll}_{opts}.nc",
         ll=ll,
         **{
             k: config["scenario"][k] if getattr(w, k) == "all" else getattr(w, k)
