@@ -40,7 +40,7 @@ rule cluster_all_networks:
 rule extra_components_all_networks:
     input:
         expand(
-            "networks/" + RDIR + "elec_s{simpl}_{clusters}_off-{offgrid}_ec.nc",
+            "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
             **config["scenario"]
         ),
 
@@ -50,7 +50,7 @@ rule prepare_all_networks:
         expand(
             "networks/"
             + RDIR
-            + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.nc",
+            + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
 
@@ -60,12 +60,12 @@ rule solve_all_networks:
         expand(
             "results/networks/"
             + RDIR
-            + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.nc",
+            + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
 
 rule plot_all_networks:
-    input: expand(["results/plots/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
+    input: expand(["results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
 
 rule make_NL_summaries:
     input: expand(["results/summaries/elec_s{simpl}_{clusters}_off-_ec_l{ll}_{opts}_{country}"], country='NL', **config['scenario'])
@@ -545,19 +545,19 @@ rule build_offshore_grid:
 
 rule add_extra_components:
     input:
-        network="networks/" + RDIR + "elec_s{simpl}_{clusters}_off-{offgrid}.nc",
+        network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
         tech_costs=COSTS,
     output:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_off-{offgrid}_ec.nc",
+        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
     log:
         "logs/"
         + RDIR
-        + "add_extra_components/elec_s{simpl}_{clusters}_off-{offgrid}.log",
+        + "add_extra_components/elec_s{simpl}_{clusters}.log",
     benchmark:
         (
             "benchmarks/"
             + RDIR
-            + "add_extra_components/elec_s{simpl}_{clusters}_off-{offgrid}_ec"
+            + "add_extra_components/elec_s{simpl}_{clusters}_ec"
         )
     threads: 1
     resources:
@@ -568,19 +568,19 @@ rule add_extra_components:
 
 rule prepare_network:
     input:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_off-{offgrid}_ec.nc",
+        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,
     output:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.nc",
+        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         "logs/"
         + RDIR
-        + "prepare_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.log",
+        + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
     benchmark:
         (
             "benchmarks/"
             + RDIR
-            + "prepare_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}"
+            + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: 1
     resources:
@@ -611,28 +611,28 @@ def memory(w):
 
 rule solve_network:
     input:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.nc",
+        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         "results/networks/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.nc",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         solver=normpath(
             "logs/"
             + RDIR
-            + "solve_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_solver.log"
+            + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
         ),
         python="logs/"
         + RDIR
-        + "solve_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_python.log",
+        + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
         memory="logs/"
         + RDIR
-        + "solve_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_memory.log",
+        + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log",
     benchmark:
         (
             "benchmarks/"
             + RDIR
-            + "solve_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}"
+            + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: 4
     resources:
@@ -645,31 +645,31 @@ rule solve_network:
 
 rule solve_operations_network:
     input:
-        unprepared="networks/" + RDIR + "elec_s{simpl}_{clusters}_off-{offgrid}_ec.nc",
+        unprepared="networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
         optimized="results/networks/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.nc",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         "results/networks/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_op.nc",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
             "logs/"
             + RDIR
-            + "solve_operations_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_op_solver.log"
+            + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"
         ),
         python="logs/"
         + RDIR
-        + "solve_operations_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_op_python.log",
+        + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
         memory="logs/"
         + RDIR
-        + "solve_operations_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_op_memory.log",
+        + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_memory.log",
     benchmark:
         (
             "benchmarks/"
             + RDIR
-            + "solve_operations_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}"
+            + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: 4
     resources:
@@ -684,19 +684,19 @@ rule plot_network:
     input:
         network="results/networks/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}.nc",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         tech_costs=COSTS,
     output:
         only_map="results/plots/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}.{ext}",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
         ext="results/plots/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
     log:
         "logs/"
         + RDIR
-        + "plot_network/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{attr}_{ext}.log",
+        + "plot_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
     script:
         "scripts/plot_network.py"
 
@@ -728,12 +728,12 @@ rule make_summary:
         directory(
             "results/summaries/"
             + RDIR
-            + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{country}"
+            + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
         ),
     log:
         "logs/"
         + RDIR
-        + "make_summary/elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{country}.log",
+        + "make_summary/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
     resources:
         mem_mb=500,
     script:
@@ -744,15 +744,15 @@ rule plot_summary:
     input:
         "results/summaries/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{country}",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}",
     output:
         "results/plots/"
         + RDIR
-        + "summary_{summary}_elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{country}.{ext}",
+        + "summary_{summary}_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}",
     log:
         "logs/"
         + RDIR
-        + "plot_summary/{summary}_elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{ll}_{opts}_{country}_{ext}.log",
+        + "plot_summary/{summary}_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}_{ext}.log",
     resources:
         mem_mb=500,
     script:

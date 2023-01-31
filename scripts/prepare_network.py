@@ -138,10 +138,10 @@ def set_transmission_limit(n, ll_type, factor, costs, Nyears=1):
         n.links.loc[links_dc_b, "p_nom_min"] = n.links.loc[links_dc_b, "p_nom"]
         n.links.loc[links_dc_b, "p_nom_extendable"] = True
 
-    if snakemake.wildcards["offgrid"]:
-        off_filter = n.lines.filter(like="off", axis=0).index
-        n.lines.loc[off_filter, "s_nom_extendable"] = True
-        ref -= lines_s_nom[off_filter] @ n.lines.loc[off_filter, col]
+    # if snakemake.wildcards["offgrid"]:
+    #     off_filter = n.lines.filter(like="off", axis=0).index
+    #     n.lines.loc[off_filter, "s_nom_extendable"] = True
+    #     ref -= lines_s_nom[off_filter] @ n.lines.loc[off_filter, col]
 
     if factor != "opt":
         con_type = "expansion_cost" if ll_type == "c" else "volume_expansion"

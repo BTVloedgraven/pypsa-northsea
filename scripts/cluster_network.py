@@ -468,7 +468,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-    n.buses.to_csv('buses.csv')
 
     focus_weights = snakemake.config.get("focus_weights", None)
 
@@ -567,12 +566,12 @@ if __name__ == "__main__":
 
     cluster_regions((clustering.busmap,), snakemake.input, snakemake.output)
 
-    plot_busmap_for_n_clusters(
-        n,
-        n_clusters,
-        snakemake.config["solving"]["solver"]["name"],
-        focus_weights,
-        cluster_config.get("algorithm", "hac"),
-        cluster_config.get("feature", "solar+onwind-time"),
-        fn='busmap.png'
-    )
+    # plot_busmap_for_n_clusters(
+    #     n,
+    #     n_clusters,
+    #     snakemake.config["solving"]["solver"]["name"],
+    #     focus_weights,
+    #     cluster_config.get("algorithm", "hac"),
+    #     cluster_config.get("feature", "solar+onwind-time"),
+    #     fn='busmap.png'
+    # )
