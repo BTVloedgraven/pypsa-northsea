@@ -188,10 +188,15 @@ if __name__ == "__main__":
         inner_regions = build_voronoi_cells(shape.geometry, region_centers)
         if country in offshore_shapes_rest.index:
             inner_regions = pd.concat([gpd.GeoDataFrame({"geometry": offshore_shapes_rest.loc[country]}), inner_regions], ignore_index=True)
-        inner_regions.set_index(
-            pd.Index([f"off_{country}_{i}" for i in inner_regions.index], name="region"),
-            inplace=True,
-        )
+            inner_regions.set_index(
+                pd.Index([f"off_{country}_{i}" for i in inner_regions.index], name="region"),
+                inplace=True,
+            )
+        else:
+            inner_regions.set_index(
+                pd.Index([f"off_{country}_{i+1}" for i in inner_regions.index], name="region"),
+                inplace=True,
+            )
         inner_regions["name"] = inner_regions.index
         inner_regions["country"] = country
         offshore_regions.append(inner_regions)
@@ -200,7 +205,5 @@ if __name__ == "__main__":
     centroid = offshore_regions.to_crs(3035).centroid.to_crs(4326)
     offshore_regions["x"] = centroid.x
     offshore_regions["y"] = centroid.y
-
-    offshore_regions.plot()
 
     offshore_regions.to_file(snakemake.output.meshed_offshore_shapes)

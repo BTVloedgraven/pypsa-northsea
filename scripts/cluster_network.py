@@ -439,8 +439,8 @@ def cluster_regions(busmaps, input=None, output=None):
 
     for which in ("regions_onshore", "regions_offshore"):
         regions = gpd.read_file(getattr(input, which))
-        if which == "regions_offshore":
-            regions["name"] = regions.name.str.replace("_\d", "", regex=True)
+        # if which == "regions_offshore":
+        #     regions["name"] = regions.name.str.replace("_\d", "", regex=True)
         regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
         regions_c = regions.dissolve(busmap)
         regions_c.index.name = "name"
