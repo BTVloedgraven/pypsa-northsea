@@ -503,7 +503,7 @@ outputs = [
 
 def make_summaries(networks_dict, paths, config, country="all"):
     columns = pd.MultiIndex.from_tuples(
-        networks_dict.keys(), names=["simpl", "clusters", "offgrid", "ll", "opts"]
+        networks_dict.keys(), names=["simpl", "clusters", "ll", "opts"]
     )
 
     dfs = {}
@@ -580,12 +580,11 @@ if __name__ == "__main__":
         ll = [wildcards.ll]
 
     networks_dict = {
-        (simpl, clusters, offgrid, l, opts): os.path.join(
-            network_dir, f"elec_s{simpl}_{clusters}_off-{offgrid}_ec_l{l}_{opts}.nc"
+        (simpl, clusters, l, opts): os.path.join(
+            network_dir, f"elec_s{simpl}_{clusters}_ec_l{l}_{opts}.nc"
         )
         for simpl in expand_from_wildcard("simpl", config)
         for clusters in expand_from_wildcard("clusters", config)
-        for offgrid in expand_from_wildcard("offgrid", config)
         for l in ll
         for opts in expand_from_wildcard("opts", config)
     }

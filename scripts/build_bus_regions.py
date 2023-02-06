@@ -187,7 +187,7 @@ if __name__ == "__main__":
             offshore_regions_c = offshore_regions_c[offshore_regions_c.geometry.is_empty == False]
             offshore_regions.append(offshore_regions_c)
             if not offshore_locs.empty:
-                offshore_regions_c = pd.concat([offshore_regions_c, gpd.GeoDataFrame(
+                offshore_regions_c = gpd.GeoDataFrame(
                     {
                         "name": offshore_locs.index,
                         "x": offshore_locs["x"],
@@ -195,22 +195,22 @@ if __name__ == "__main__":
                         "geometry": voronoi_partition_pts(offshore_locs.values, offshore_shape.geometry),
                         "country": offshore_shape.country,
                     }
-                )])
-                #offshore_regions_c is redefined...
+                )
                 offshore_regions_c = offshore_regions_c[offshore_regions_c.geometry.is_empty == False]
                 offshore_regions.append(offshore_regions_c)
             index_shape_rest = index_shape.split('_')[2] == '0'
             if build_custom_busmap and not index_shape_rest:
                 onshore_regions_country = onshore_regions.loc[onshore_regions.country==country].name.values
-                add_to_busmap = offshore_regions_c.apply(lambda reg: reg.name not in onshore_regions_country, axis=1)
-                add_to_busmap = offshore_regions_c.loc[add_to_busmap]
-                remove_from_busmap = busmap.name.isin(add_to_busmap.name)
-                busmap = busmap.drop(busmap.loc[remove_from_busmap].index)
+                add_to_busmap = offshore_regions_c.loc[~offshore_regions_c.name.isin(onshore_regions_country)]  
+                # add_to_busmap = add_to_busmap.loc[add_to_busmap.name.isin(busmap.name)]
+                if not add_to_busmap.empty:
+                    busmap = busmap.loc[~busmap.name.isin(add_to_busmap.index)]
+                add_to_busmap = pd.DataFrame(add_to_busmap.name)
                 add_to_busmap = add_to_busmap.assign(busmap=index_shape)
                 busmap = pd.concat([busmap, add_to_busmap[['name', 'busmap']]], ignore_index=True)
 
     if build_custom_busmap:
-        busmap.to_csv(f"data/custom_busmap_elec_s_{snakemake.config['scenario']['clusters'][0]}.csv", index=False)
+        busmap.to_csv(snakemake.output.busmap, index=False)
 
     if offshore_regions:
         pd.concat(offshore_regions, ignore_index=True).to_file(

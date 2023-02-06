@@ -68,7 +68,7 @@ rule plot_all_networks:
     input: expand(["results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
 
 rule make_NL_summaries:
-    input: expand(["results/summaries/elec_s{simpl}_{clusters}_off-_ec_l{ll}_{opts}_{country}"], country='NL', **config['scenario'])
+    input: expand(["results/summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"], country='NL', **config['scenario'])
 
 rule build_bus_regions_test:
     input:
@@ -234,6 +234,7 @@ rule build_bus_regions:
         regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
         regions_offshore="resources/" + RDIR + "regions_offshore.geojson",
         network="networks/" + RDIR + "base_offshore_buses.nc",
+        busmap="data/" + RDIR + "custom_busmap_elec_s{simpl}_{clusters}.csv".format(simpl=config['scenario']['simpl'][0], clusters=config['scenario']['clusters'][0]),
     log:
         "logs/" + RDIR + "build_bus_regions.log",
     threads: 1
@@ -712,7 +713,7 @@ def input_make_summary(w):
     return [COSTS] + expand(
         "results/networks/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_off-_ec_l{ll}_{opts}.nc",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         ll=ll,
         **{
             k: config["scenario"][k] if getattr(w, k) == "all" else getattr(w, k)

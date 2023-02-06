@@ -397,6 +397,23 @@ def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
 
     busmap = busmap_by_stubs(n)  #  ['country'])
 
+    # custom_busmap = pd.read_csv(f"data/custom_busmap_elec_s{snakemake.config['scenario']['simpl'][0]}_{snakemake.config['scenario']['clusters'][0]}.csv")
+    # custom_busmap['name'] = custom_busmap['name'].astype(str)
+
+    # busmap.name = 'busmap'
+    # busmap.to_csv('busmap.csv')
+    # merged_busmap = pd.merge(busmap, custom_busmap.set_index('name'), left_on='busmap', right_index=True).drop('busmap', axis=1)
+    # merged_busmap.to_csv('merged_busmap.csv')
+    # busmap_y_off = merged_busmap.loc[merged_busmap.busmap_y.str.startswith('off')]
+    # busmap_y_off = busmap_y_off.loc[busmap_y_off.busmap_x != busmap_y_off.index].drop('busmap_y', axis=1).rename(columns={'busmap_x':'busmap'})
+    # busmap_sskern = pd.read_csv('data/custom_busmap_sskern.csv').set_index('name')
+    # busmap_sskern.index = busmap_sskern.index.astype(str)
+    # for bus, map in busmap_y_off.iterrows():
+    #     if bus not in custom_busmap.name.values:
+    #         custom_busmap = pd.concat([custom_busmap, pd.DataFrame([{'name':bus, 'busmap':busmap_sskern.busmap[map.busmap]}])], ignore_index=True)
+    #     busmap[bus] = bus
+    # custom_busmap.to_csv(f"data/custom_busmap_elec_s{snakemake.config['scenario']['simpl'][0]}_{snakemake.config['scenario']['clusters'][0]}.csv", index=False)
+
     connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, config)
 
     exclude_carriers = config["clustering"]["simplify_network"].get(
