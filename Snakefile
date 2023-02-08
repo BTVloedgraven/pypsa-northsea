@@ -50,7 +50,7 @@ rule prepare_all_networks:
         expand(
             "networks/"
             + RDIR
-            + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+            + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
 
@@ -60,12 +60,12 @@ rule solve_all_networks:
         expand(
             "results/networks/"
             + RDIR
-            + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+            + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
 
 rule plot_all_networks:
-    input: expand(["results/plots/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
+    input: expand(["results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
 
 rule build_bus_regions_test:
     input:
@@ -441,13 +441,15 @@ rule add_electricity:
         },
         base_network="networks/" + RDIR + "base_offshore_buses.nc",
         tech_costs=COSTS,
-        regions="resources/" + RDIR + "regions_onshore.geojson",
+        onshore_regions="resources/" + RDIR + "regions_onshore.geojson",
+        offshore_regions="resources/" + RDIR + "regions_offshore.geojson",
         powerplants="resources/" + RDIR + "powerplants.csv",
         hydro_capacities="data/bundle/hydro_capacities.csv",
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         load="resources/" + RDIR + "load.csv",
         nuts3_shapes="resources/" + RDIR + "nuts3_shapes.geojson",
         gebco="data/bundle/GEBCO_2014_2D.nc",
+        busmap_offshore="resources/" + RDIR + "busmap_offshore.csv",
     output:
         "networks/" + RDIR + "elec.nc",
     log:
@@ -463,20 +465,20 @@ rule add_electricity:
 
 rule simplify_network:
     input:
-        network="networks/" + RDIR + "elec_off-{offgrid}.nc",
+        network="networks/" + RDIR + "elec.nc",
         tech_costs=COSTS,
         regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
         regions_offshore="resources/" + RDIR + "regions_offshore.geojson",
     output:
-        network="networks/" + RDIR + "elec_off-{offgrid}_s{simpl}.nc",
-        regions_onshore="resources/" + RDIR + "regions_onshore_elec_off-{offgrid}_s{simpl}.geojson",
-        regions_offshore="resources/" + RDIR + "regions_offshore_elec_off-{offgrid}_s{simpl}.geojson",
-        busmap="resources/" + RDIR + "busmap_elec_off-{offgrid}_s{simpl}.csv",
-        connection_costs="resources/" + RDIR + "connection_costs_off-{offgrid}_s{simpl}.csv",
+        network="networks/" + RDIR + "elec_s{simpl}.nc",
+        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}.geojson",
+        regions_offshore="resources/" + RDIR + "regions_offshore_elec_s{simpl}.geojson",
+        busmap="resources/" + RDIR + "busmap_elec_s{simpl}.csv",
+        connection_costs="resources/" + RDIR + "connection_costs_s{simpl}.csv",
     log:
-        "logs/" + RDIR + "simplify_network/elec_off-{offgrid}_s{simpl}.log",
+        "logs/" + RDIR + "simplify_network/elec_s{simpl}.log",
     benchmark:
-        "benchmarks/" + RDIR + "simplify_network/elec_off-{offgrid}_s{simpl}"
+        "benchmarks/" + RDIR + "simplify_network/elec_s{simpl}"
     threads: 1
     resources:
         mem_mb=4000,
@@ -486,10 +488,10 @@ rule simplify_network:
 
 rule cluster_network:
     input:
-        network="networks/" + RDIR + "elec_off-{offgrid}_s{simpl}.nc",
-        regions_onshore="resources/" + RDIR + "regions_onshore_elec_off-{offgrid}_s{simpl}.geojson",
-        regions_offshore="resources/" + RDIR + "regions_offshore_elec_off-{offgrid}_s{simpl}.geojson",
-        busmap=ancient("resources/" + RDIR + "busmap_elec_off-{offgrid}_s{simpl}.csv"),
+        network="networks/" + RDIR + "elec_s{simpl}.nc",
+        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}.geojson",
+        regions_offshore="resources/" + RDIR + "regions_offshore_elec_s{simpl}.geojson",
+        busmap=ancient("resources/" + RDIR + "busmap_elec_s{simpl}.csv"),
         custom_busmap=(
             "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
             if config["enable"].get("custom_busmap", False)
@@ -497,19 +499,19 @@ rule cluster_network:
         ),
         tech_costs=COSTS,
     output:
-        network="networks/" + RDIR + "elec_off-{offgrid}_s{simpl}_{clusters}.nc",
+        network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
         regions_onshore="resources/"
         + RDIR
-        + "regions_onshore_elec_off-{offgrid}_s{simpl}_{clusters}.geojson",
+        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         regions_offshore="resources/"
         + RDIR
-        + "regions_offshore_elec_off-{offgrid}_s{simpl}_{clusters}.geojson",
-        busmap="resources/" + RDIR + "busmap_elec_off-{offgrid}_s{simpl}_{clusters}.csv",
-        linemap="resources/" + RDIR + "linemap_elec_off-{offgrid}_s{simpl}_{clusters}.csv",
+        + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        busmap="resources/" + RDIR + "busmap_elec_s{simpl}_{clusters}.csv",
+        linemap="resources/" + RDIR + "linemap_elec_s{simpl}_{clusters}.csv",
     log:
-        "logs/" + RDIR + "cluster_network/elec_off-{offgrid}_s{simpl}_{clusters}.log",
+        "logs/" + RDIR + "cluster_network/elec_s{simpl}_{clusters}.log",
     benchmark:
-        "benchmarks/" + RDIR + "cluster_network/elec_off-{offgrid}_s{simpl}_{clusters}"
+        "benchmarks/" + RDIR + "cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
     resources:
         mem_mb=6000,
@@ -537,24 +539,24 @@ rule build_offshore_grid:
     resources:
         mem_mb=1000,
     script:
-        "scripts/move_generators.py"
+        "scripts/build_offshore_grid.py"
 
 
 rule add_extra_components:
     input:
-        network="networks/" + RDIR + "elec_off-{offgrid}_s{simpl}_{clusters}.nc",
+        network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
         tech_costs=COSTS,
     output:
-        "networks/" + RDIR + "elec_off-{offgrid}_s{simpl}_{clusters}_ec.nc",
+        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
     log:
         "logs/"
         + RDIR
-        + "add_extra_components/elec_off-{offgrid}_s{simpl}_{clusters}.log",
+        + "add_extra_components/elec_s{simpl}_{clusters}.log",
     benchmark:
         (
             "benchmarks/"
             + RDIR
-            + "add_extra_components/elec_off-{offgrid}_s{simpl}_{clusters}_ec"
+            + "add_extra_components/elec_s{simpl}_{clusters}_ec"
         )
     threads: 1
     resources:
@@ -565,19 +567,19 @@ rule add_extra_components:
 
 rule prepare_network:
     input:
-        "networks/" + RDIR + "elec_off-{offgrid}_s{simpl}_{clusters}_ec.nc",
+        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,
     output:
-        "networks/" + RDIR + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         "logs/"
         + RDIR
-        + "prepare_network/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
+        + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
     benchmark:
         (
             "benchmarks/"
             + RDIR
-            + "prepare_network/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: 1
     resources:
@@ -608,28 +610,28 @@ def memory(w):
 
 rule solve_network:
     input:
-        "networks/" + RDIR + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         "results/networks/"
         + RDIR
-        + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         solver=normpath(
             "logs/"
             + RDIR
-            + "solve_network/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
+            + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
         ),
         python="logs/"
         + RDIR
-        + "solve_network/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
+        + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
         memory="logs/"
         + RDIR
-        + "solve_network/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log",
+        + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log",
     benchmark:
         (
             "benchmarks/"
             + RDIR
-            + "solve_network/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: 4
     resources:
@@ -681,19 +683,19 @@ rule plot_network:
     input:
         network="results/networks/"
         + RDIR
-        + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         tech_costs=COSTS,
     output:
         only_map="results/plots/"
         + RDIR
-        + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
         ext="results/plots/"
         + RDIR
-        + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
     log:
         "logs/"
         + RDIR
-        + "plot_network/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
+        + "plot_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
     script:
         "scripts/plot_network.py"
 
@@ -709,7 +711,7 @@ def input_make_summary(w):
     return [COSTS] + expand(
         "results/networks/"
         + RDIR
-        + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         ll=ll,
         **{
             k: config["scenario"][k] if getattr(w, k) == "all" else getattr(w, k)
@@ -725,12 +727,12 @@ rule make_summary:
         directory(
             "results/summaries/"
             + RDIR
-            + "elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
+            + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
         ),
     log:
         "logs/"
         + RDIR
-        + "make_summary/elec_off-{offgrid}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
+        + "make_summary/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
     resources:
         mem_mb=500,
     script:

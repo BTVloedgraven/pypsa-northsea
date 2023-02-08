@@ -460,6 +460,30 @@ def attach_wind_and_solar(
                     p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
                 )
 
+def move_generators(
+    n,
+    costs,
+    offshore_regions,
+    cluster_map,
+):
+    offshore_regions = gpd.read_file(offshore_regions)
+    cluster_map = pd.read_csv(cluster_map).set_index('name')
+    move_generators = (
+        n.generators[n.generators.bus.isin(offshore_regions.name.unique())]
+        .filter(like="offwind", axis=0)
+        .index.to_series()
+        .str.replace(" offwind-\w+", "", regex=True)
+    ).rename('name')
+    
+    move_generators = pd.merge(move_generators, cluster_map, left_on='name', right_index=True)
+
+    move_generators = move_generators[move_generators.isin(n.buses.index)]
+    n.generators.loc[move_generators.index, "bus"] = move_generators.busmap
+    # only consider turbine cost and substation cost for offshore generators connected to offshore grid
+    n.generators.loc[move_generators.index, "capital_cost"] = (
+        n.generators.loc[move_generators.index, "turbine_cost"]
+        + costs.at["offwind-ac-station", "capital_cost"]
+    )
 
 def attach_conventional_generators(
     n,
@@ -852,7 +876,7 @@ if __name__ == "__main__":
 
     attach_load(
         n,
-        snakemake.input.regions,
+        snakemake.input.onshore_regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
         snakemake.config["countries"],
@@ -882,6 +906,13 @@ if __name__ == "__main__":
         extendable_carriers,
         snakemake.config["renewable"],
         snakemake.config["lines"]["length_factor"],
+    )
+
+    move_generators(
+        n,
+        costs,
+        snakemake.input.offshore_regions, 
+        snakemake.input.busmap_offshore
     )
 
     if "estimate_renewable_capacities" not in snakemake.config["electricity"]:
