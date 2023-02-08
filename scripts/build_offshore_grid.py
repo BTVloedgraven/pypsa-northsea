@@ -280,7 +280,7 @@ if __name__ == "__main__":
         offshore_generators["regions"] = offshore_generators.index.str.replace(
             " offwind-\w+", "", regex=True
         )
-        busmap = gpd.read_file(snakemake.input.busmap_cluster).loc[:, ['Bus', 'busmap']].rename(columns={"Bus": "regions", "busmap":"bus"})
+        busmap = gpd.read_file(snakemake.input.busmap_cluster).loc[:, ['name', 'busmap']].rename(columns={"name": "regions", "busmap":"bus"})
         offshore_generators = offshore_generators.groupby("regions").agg(
             {"p_nom_max": np.sum, "cf": np.mean}
         )
@@ -297,7 +297,7 @@ if __name__ == "__main__":
             map(tuple, (n.buses.loc[offshore_regions.bus, ["x", "y"]]).values)
         )
         coords["offshore"] = list(
-            map(tuple, (offshore_regions[["x_region", "y_region"]]).values)
+            map(tuple, (offshore_regions[["x", "y"]]).values)
         )
         offshore_regions["distance"] = coords.apply(
             lambda x: geodesic(x.onshore, x.offshore).km, axis=1
@@ -318,7 +318,6 @@ if __name__ == "__main__":
         # TODO: culster for offshore hubs
         # TODO: think about threshold criterion
         offshore_regions = offshore_regions.query("distance>=50 & p_nom_max>1000")
-
         offshore_regions["yield"] = offshore_regions.eval("p_nom_max * cf")
 
         # cluster buses to simplify grid or to get hubs
@@ -442,8 +441,8 @@ if __name__ == "__main__":
                 "Bus",
                 names="off_" + offshore_regions.index,
                 v_nom=220,
-                x=offshore_regions["x_region"].values,
-                y=offshore_regions["y_region"].values,
+                x=offshore_regions["x"].values,
+                y=offshore_regions["y"].values,
                 substation_off=True,
                 country=offshore_regions["country"].values,
             )

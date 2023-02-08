@@ -164,16 +164,6 @@ if __name__ == "__main__":
         for index_shape, offshore_shape in meshed_shapes.iterrows():
             r_b = offshore_region_bus == index_shape
             offshore_locs = n.buses.loc[offshore_region_bus.loc[r_b].index, ["x", "y"]]
-            
-            offshore_regions_c = gpd.GeoDataFrame(
-                {
-                    "name": offshore_shape.name,
-                    "x": offshore_shape.x,
-                    "y": offshore_shape.y,
-                    "geometry": [offshore_shape.geometry],
-                    "country": offshore_shape.country
-                }, index = pd.Index([offshore_shape.name], dtype='object', name='Bus')
-            )
             n.madd(
                 "Bus",
                 names=[offshore_shape.name],
@@ -184,9 +174,19 @@ if __name__ == "__main__":
                 substation_off=True,
                 country=offshore_shape.country,
             )
-            offshore_regions_c = offshore_regions_c[offshore_regions_c.geometry.is_empty == False]
-            offshore_regions.append(offshore_regions_c)
-            if not offshore_locs.empty:
+            if offshore_locs.empty:
+                offshore_regions_c = gpd.GeoDataFrame(
+                    {
+                        "name": offshore_shape.name,
+                        "x": offshore_shape.x,
+                        "y": offshore_shape.y,
+                        "geometry": [offshore_shape.geometry],
+                        "country": offshore_shape.country
+                    }, index = pd.Index([offshore_shape.name], dtype='object', name='Bus')
+                )
+                offshore_regions.append(offshore_regions_c)
+
+            else:
                 offshore_regions_c = gpd.GeoDataFrame(
                     {
                         "name": offshore_locs.index,
@@ -201,13 +201,16 @@ if __name__ == "__main__":
             index_shape_rest = index_shape.split('_')[2] == '0'
             if build_custom_busmap and not index_shape_rest:
                 onshore_regions_country = onshore_regions.loc[onshore_regions.country==country].name.values
-                add_to_busmap = offshore_regions_c.loc[~offshore_regions_c.name.isin(onshore_regions_country)]  
+                add_to_busmap = offshore_regions_c.loc[~offshore_regions_c.name.isin(onshore_regions_country)]
                 # add_to_busmap = add_to_busmap.loc[add_to_busmap.name.isin(busmap.name)]
                 if not add_to_busmap.empty:
                     busmap = busmap.loc[~busmap.name.isin(add_to_busmap.index)]
                 add_to_busmap = pd.DataFrame(add_to_busmap.name)
                 add_to_busmap = add_to_busmap.assign(busmap=index_shape)
                 busmap = pd.concat([busmap, add_to_busmap[['name', 'busmap']]], ignore_index=True)
+                if index_shape not in busmap.name.values:
+                    a = pd.DataFrame({'name': [index_shape], 'busmap': [index_shape]})
+                    busmap = pd.concat([busmap, a], ignore_index=True)
 
     if build_custom_busmap:
         busmap.to_csv(snakemake.output.busmap, index=False)
