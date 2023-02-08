@@ -119,6 +119,8 @@ if __name__ == "__main__":
         busmap = pd.read_csv('data/custom_busmap_sskern.csv')
         busmap['name'] = busmap['name'].astype(str)
 
+    offshore_busmap = pd.DataFrame([])
+
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index("name")[
         "geometry"
     ]
@@ -201,19 +203,16 @@ if __name__ == "__main__":
             index_shape_rest = index_shape.split('_')[2] == '0'
             if build_custom_busmap and not index_shape_rest:
                 onshore_regions_country = onshore_regions.loc[onshore_regions.country==country].name.values
-                add_to_busmap = offshore_regions_c.loc[~offshore_regions_c.name.isin(onshore_regions_country)]
-                # add_to_busmap = add_to_busmap.loc[add_to_busmap.name.isin(busmap.name)]
-                if not add_to_busmap.empty:
-                    busmap = busmap.loc[~busmap.name.isin(add_to_busmap.index)]
-                add_to_busmap = pd.DataFrame(add_to_busmap.name)
-                add_to_busmap = add_to_busmap.assign(busmap=index_shape)
-                busmap = pd.concat([busmap, add_to_busmap[['name', 'busmap']]], ignore_index=True)
+                add_offshore_busmap = pd.DataFrame(offshore_regions_c.name)
+                add_offshore_busmap = add_offshore_busmap.assign(busmap=index_shape)
+                offshore_busmap = pd.concat([offshore_busmap, add_offshore_busmap], ignore_index=True)
                 if index_shape not in busmap.name.values:
-                    a = pd.DataFrame({'name': [index_shape], 'busmap': [index_shape]})
-                    busmap = pd.concat([busmap, a], ignore_index=True)
+                    add_to_busmap = pd.DataFrame({'name': [index_shape], 'busmap': [index_shape]})
+                    busmap = pd.concat([busmap, add_to_busmap], ignore_index=True)
 
     if build_custom_busmap:
         busmap.to_csv(snakemake.output.busmap, index=False)
+        offshore_busmap.to_csv(snakemake.output.busmap_offshore, index=False)
 
     if offshore_regions:
         pd.concat(offshore_regions, ignore_index=True).to_file(
