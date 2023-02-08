@@ -67,9 +67,6 @@ rule solve_all_networks:
 rule plot_all_networks:
     input: expand(["results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
 
-rule make_NL_summaries:
-    input: expand(["results/summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"], country='NL', **config['scenario'])
-
 rule build_bus_regions_test:
     input:
         regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
