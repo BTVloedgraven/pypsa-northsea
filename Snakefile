@@ -611,6 +611,7 @@ def memory(w):
 rule solve_network:
     input:
         "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        "data/" + RDIR + "agg_p_nom_minmax.csv"
     output:
         "results/networks/"
         + RDIR
@@ -715,7 +716,7 @@ def input_make_summary(w):
         ll=ll,
         **{
             k: config["scenario"][k] if getattr(w, k) == "all" else getattr(w, k)
-            for k in ["offgrid", "simpl", "clusters", "opts"]
+            for k in ["simpl", "clusters", "opts"]
         }
     )
 

@@ -96,6 +96,7 @@ from pypsa.linopf import (
     network_lopf,
 )
 from vresutils.benchmark import memory_logger
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -148,10 +149,8 @@ def prepare_network(n, solve_opts):
 
 
 def add_CCL_constraints(n, config):
-    agg_p_nom_limits = config["electricity"].get("agg_p_nom_limits")
-
     try:
-        agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=list(range(2)))
+        agg_p_nom_minmax = pd.read_csv(snakemake.input[1], index_col=list(range(2)))
     except IOError:
         logger.exception(
             "Need to specify the path to a .csv file containing "
