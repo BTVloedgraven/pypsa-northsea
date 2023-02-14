@@ -99,7 +99,6 @@ from vresutils import transfer as vtransfer
 from sklearn.neighbors import BallTree
 import networkx as nx
 from geopy.distance import geodesic
-from shapely.geometry import LineString
 
 idx = pd.IndexSlice
 
@@ -492,6 +491,7 @@ def move_generators(
 
 def add_offshore_connections(
     n,
+    costs,
     onshore_regions,
 ):
     onshore_regions = gpd.read_file(onshore_regions)
@@ -1002,6 +1002,7 @@ if __name__ == "__main__":
 
     add_offshore_connections(
         n,
+        costs,
         snakemake.input.onshore_regions,
     )
 

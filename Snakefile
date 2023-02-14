@@ -518,6 +518,22 @@ rule cluster_network:
     script:
         "scripts/cluster_network.py"
 
+rule add_offshore_connections:
+    input:
+        network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
+        tech_costs=COSTS,
+    output:
+        network="networks/" + RDIR + "elec_s{simpl}_{clusters}_off.nc",
+    log:
+        "logs/" + RDIR + "add_offshore_connections/elec_s{simpl}_{clusters}_off.nc",
+    benchmark:
+        "benchmarks/" + RDIR + "add_offshore_connections/elec_s{simpl}_{clusters}_off.nc",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    script:
+        "scripts/add_offshore_connections.py"
+
 
 rule build_offshore_grid:
     input:

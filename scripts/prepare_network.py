@@ -322,7 +322,9 @@ if __name__ == "__main__":
                 comps = {"Generator", "Link", "StorageUnit", "Store"}
                 for c in n.iterate_components(comps):
                     sel = c.df.carrier.str.contains(carrier)
-                    c.df.loc[sel, attr] *= factor
+                    if sel.any():
+                        logging.info(f"Setting {attr} of {carrier} of type {c.name} to {factor}")
+                        c.df.loc[sel,attr] *= factor
 
     for o in opts:
         if "Ep" in o:
