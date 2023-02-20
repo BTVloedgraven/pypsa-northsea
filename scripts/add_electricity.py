@@ -492,9 +492,7 @@ def move_generators(
 def add_offshore_connections(
     n,
     costs,
-    onshore_regions,
 ):
-    onshore_regions = gpd.read_file(onshore_regions)
     # Create line for every offshore bus and connect it to onshore buses
     onshore_coords = n.buses.loc[~n.buses.index.str.contains("off"), ["x", "y"]]
     offshore_coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
@@ -559,7 +557,7 @@ def add_offshore_connections(
         bus0=lines_df["bus0"].values,
         bus1=lines_df["bus1"].values,
         length=lines_df["length"].values,
-        type="149-AL1/24-ST1A 110.0",
+        #type="149-AL1/24-ST1A 110.0",
     )
     # attach cable cost AC for offshore grid lines
     line_length_factor = snakemake.config["lines"]["length_factor"]
@@ -569,6 +567,23 @@ def add_offshore_connections(
         * costs.at["offwind-ac-connection-submarine", "capital_cost"]
     )
     n.lines.loc[lines_df.index, "capital_cost"] = cable_cost
+
+    # n.madd(
+    #     "Link",
+    #     names=lines_df.index,
+    #     carrier="DC",
+    #     bus0=lines_df["bus0"].values,
+    #     bus1=lines_df["bus1"].values,
+    #     length=lines_df["length"].values,
+    # )
+    # # attach cable cost DC for offshore grid lines
+    # line_length_factor = snakemake.config["lines"]["length_factor"]
+    # cable_cost = n.links.loc[lines_df.index, "length"].apply(
+    #     lambda x: x
+    #     * line_length_factor
+    #     * costs.at["offwind-dc-connection-submarine", "capital_cost"]
+    # )
+    # n.links.loc[lines_df.index, "capital_cost"] = cable_cost
 
 def attach_conventional_generators(
     n,
@@ -1003,7 +1018,6 @@ if __name__ == "__main__":
     add_offshore_connections(
         n,
         costs,
-        snakemake.input.onshore_regions,
     )
 
     if "estimate_renewable_capacities" not in snakemake.config["electricity"]:
