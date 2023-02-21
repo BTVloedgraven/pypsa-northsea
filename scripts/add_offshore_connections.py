@@ -120,22 +120,21 @@ def add_offshore_connections(
     lines_df.index = "off_" + lines_df.index.astype("str")
 
     n.madd(
-        "Line",
+        "Link",
         names=lines_df.index,
-        v_nom=220,
+        carrier="DC",
         bus0=lines_df["bus0"].values,
         bus1=lines_df["bus1"].values,
         length=lines_df["length"].values,
-        type="149-AL1/24-ST1A 110.0",
     )
-    # attach cable cost AC for offshore grid lines
+    # attach cable cost DC for offshore grid lines
     line_length_factor = snakemake.config["lines"]["length_factor"]
-    cable_cost = n.lines.loc[lines_df.index, "length"].apply(
+    cable_cost = n.links.loc[lines_df.index, "length"].apply(
         lambda x: x
         * line_length_factor
-        * costs.at["offwind-ac-connection-submarine", "capital_cost"]
+        * costs.at["offwind-dc-connection-submarine", "capital_cost"]
     )
-    n.lines.loc[lines_df.index, "capital_cost"] = cable_cost
+    n.links.loc[lines_df.index, "capital_cost"] = cable_cost
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

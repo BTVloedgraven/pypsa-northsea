@@ -333,33 +333,36 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
 def update_transmission_costs(n, costs, length_factor=1.0):
     # TODO: line length factor of lines is applied to lines and links.
     # Separate the function to distinguish.
+    bus0_on = ~n.lines.bus0.str.contains("off")
+    bus1_on = ~n.lines.bus1.str.contains("off")
 
-    n.lines["capital_cost"] = (
-        n.lines["length"] * length_factor * costs.at["HVAC overhead", "capital_cost"]
+    n.lines.loc[bus0_on & bus1_on, "capital_cost"] = (
+        n.lines.loc[bus0_on & bus1_on, "length"] * length_factor * costs.at["HVAC overhead", "capital_cost"]
     )
 
     if n.links.empty:
         return
 
     dc_b = n.links.carrier == "DC"
+    dc_off = ~n.links.index.str.contains("off")
 
     # If there are no dc links, then the 'underwater_fraction' column
     # may be missing. Therefore we have to return here.
-    if n.links.loc[dc_b].empty:
+    if n.links.loc[dc_b & dc_off].empty:
         return
 
     costs = (
-        n.links.loc[dc_b, "length"]
+        n.links.loc[dc_b & dc_off, "length"]
         * length_factor
         * (
-            (1.0 - n.links.loc[dc_b, "underwater_fraction"])
+            (1.0 - n.links.loc[dc_b & dc_off, "underwater_fraction"])
             * costs.at["HVDC overhead", "capital_cost"]
-            + n.links.loc[dc_b, "underwater_fraction"]
+            + n.links.loc[dc_b & dc_off, "underwater_fraction"]
             * costs.at["HVDC submarine", "capital_cost"]
         )
         + costs.at["HVDC inverter pair", "capital_cost"]
     )
-    n.links.loc[dc_b, "capital_cost"] = costs
+    n.links.loc[dc_b & dc_off, "capital_cost"] = costs
 
 
 def attach_wind_and_solar(
@@ -486,7 +489,6 @@ def move_generators(
     # only consider turbine cost and substation cost for offshore generators connected to offshore grid
     n.generators.loc[move_generators.index, "capital_cost"] = (
         n.generators.loc[move_generators.index, "turbine_cost"]
-        + costs.at["offwind-ac-station", "capital_cost"]
     )
 
 def add_offshore_connections(
@@ -557,7 +559,6 @@ def add_offshore_connections(
         bus0=lines_df["bus0"].values,
         bus1=lines_df["bus1"].values,
         length=lines_df["length"].values,
-        #type="149-AL1/24-ST1A 110.0",
     )
     # attach cable cost AC for offshore grid lines
     line_length_factor = snakemake.config["lines"]["length_factor"]
@@ -565,6 +566,7 @@ def add_offshore_connections(
         lambda x: x
         * line_length_factor
         * costs.at["offwind-ac-connection-submarine", "capital_cost"]
+        + costs.at["offwind-ac-station", "capital_cost"]
     )
     n.lines.loc[lines_df.index, "capital_cost"] = cable_cost
 

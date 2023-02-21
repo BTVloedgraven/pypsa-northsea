@@ -54,6 +54,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import libpysal
 import pypsa
 from _helpers import configure_logging
 from add_electricity import (
@@ -61,6 +62,9 @@ from add_electricity import (
     add_nice_carrier_names,
     load_costs,
 )
+from sklearn.neighbors import BallTree
+import networkx as nx
+from geopy.distance import geodesic
 
 idx = pd.IndexSlice
 
@@ -226,6 +230,45 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         carrier="H2 pipeline",
     )
 
+def add_DC_connections(
+    n,
+    costs,
+):
+    # Create line for every offshore bus and connect it to onshore buses
+    onshore_buses = ["NL1 0", "NL1 1", "NL1 3", "NL1 4", "DE1 4", "DK1 0", "NO2 0", "GB0 0", "GB0 1", "BE1 1"]
+    onshore_coords = n.buses.loc[n.buses.index.isin(onshore_buses), ["x", "y"]]
+    offshore_coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
+
+    coords = pd.concat([onshore_coords, offshore_coords])
+    coords["xy"] = list(map(tuple, (coords[["x", "y"]]).values))
+
+    offshore_links = pd.merge(pd.DataFrame({'bus0': offshore_coords.index}), pd.DataFrame({'bus1': onshore_buses}), how='cross')
+    offshore_links.loc[:, "length"] = offshore_links.apply(
+        lambda x: geodesic(coords.loc[x.bus0, "xy"], coords.loc[x.bus1, "xy"]).km,
+        axis=1,
+    )
+    offshore_links.drop(offshore_links.query("length==0").index, inplace=True)
+    offshore_links.index = "off_DC_" + offshore_links.index.astype("str")
+
+    n.madd(
+        "Link",
+        names=offshore_links.index,
+        carrier="DC",
+        bus0=offshore_links["bus0"].values,
+        bus1=offshore_links["bus1"].values,
+        length=offshore_links["length"].values,
+    )
+    # attach cable cost DC for offshore grid lines
+    line_length_factor = snakemake.config["lines"]["length_factor"]
+    cable_cost = n.links.loc[offshore_links.index, "length"].apply(
+        lambda x: x
+        * line_length_factor
+        * costs.at["offwind-dc-connection-submarine", "capital_cost"]
+        + costs.at["offwind-dc-station", "capital_cost"]
+    )
+    print(costs.at["offwind-ac-connection-submarine", "capital_cost"])
+    print(costs.at["offwind-ac-station", "capital_cost"])
+    n.links.loc[offshore_links.index, "capital_cost"] = cable_cost
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -240,6 +283,11 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
     costs = load_costs(
         snakemake.input.tech_costs, snakemake.config["costs"], elec_config, Nyears
+    )
+
+    add_DC_connections(
+        n,
+        costs,
     )
 
     attach_storageunits(n, costs, elec_config)
