@@ -99,6 +99,7 @@ from vresutils import transfer as vtransfer
 from sklearn.neighbors import BallTree
 import networkx as nx
 from geopy.distance import geodesic
+from pathlib import Path
 
 idx = pd.IndexSlice
 
@@ -584,6 +585,7 @@ def add_offshore_connections(
     #     lambda x: x
     #     * line_length_factor
     #     * costs.at["offwind-dc-connection-submarine", "capital_cost"]
+    #     + costs.at["offwind-ac-station", "capital_cost"]
     # )
     # n.links.loc[lines_df.index, "capital_cost"] = cable_cost
 
@@ -937,6 +939,24 @@ def add_nice_carrier_names(n, config):
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
     n.carriers["color"] = colors
 
+def insert_custom_national_loads(load, cldf: pd.DataFrame, scaling=1.):
+    """ called before loads are attached based on the normal procedure, only overwrites
+        the national value for which countries a curve is supplied. 
+    """
+    orr_load = pd.read_csv(load, index_col=0, parse_dates=True)
+
+    cldf /= scaling # Scaling is applied in attach_loads again. We don't want to scale the custom loads.
+
+    for col in cldf.columns:
+        if not (col in orr_load.columns):
+            raise ValueError(f"Custom national load does not exist in network: {col}.")
+        else:
+            logging.info(f"Adding custom national load for: {col}")
+            orr_load.loc[:, col] = cldf[col].values
+
+    orr_load.to_csv(load)
+
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -975,6 +995,13 @@ if __name__ == "__main__":
         )
 
     conventional_carriers = snakemake.config["electricity"]["conventional_carriers"]
+
+    scaling_factor = snakemake.config["load"].get("scaling_factor", 1.0)
+    clfp = snakemake.config.get('custom_loads', {}).get("national_curve_overwrite_file", "no_clfp")
+    if Path(clfp).exists():
+        cldf = pd.read_csv(clfp, index_col=0)
+        if not cldf.empty:
+            insert_custom_national_loads(snakemake.input.load, cldf, scaling_factor)
 
     attach_load(
         n,

@@ -243,6 +243,12 @@ def add_DC_connections(
     coords["xy"] = list(map(tuple, (coords[["x", "y"]]).values))
 
     offshore_links = pd.merge(pd.DataFrame({'bus0': offshore_coords.index}), pd.DataFrame({'bus1': onshore_buses}), how='cross')
+    # offshore_links_to_shore = pd.merge(pd.DataFrame({'bus0': offshore_coords.index}), pd.DataFrame({'bus1': onshore_buses}), how='cross')
+    # import itertools
+    # offshore_links = pd.DataFrame(itertools.combinations(offshore_coords.index, 2), columns=['bus0', 'bus1'])
+    # offshore_links = pd.concat([offshore_links_to_shore, offshore_links], ignore_index=True)
+    # same_bus = offshore_links.bus0 == offshore_links.bus1
+    # offshore_links.drop(offshore_links.loc[same_bus].index)
     offshore_links.loc[:, "length"] = offshore_links.apply(
         lambda x: geodesic(coords.loc[x.bus0, "xy"], coords.loc[x.bus1, "xy"]).km,
         axis=1,
@@ -266,8 +272,6 @@ def add_DC_connections(
         * costs.at["offwind-dc-connection-submarine", "capital_cost"]
         + costs.at["offwind-dc-station", "capital_cost"]
     )
-    print(costs.at["offwind-ac-connection-submarine", "capital_cost"])
-    print(costs.at["offwind-ac-station", "capital_cost"])
     n.links.loc[offshore_links.index, "capital_cost"] = cable_cost
 
 if __name__ == "__main__":

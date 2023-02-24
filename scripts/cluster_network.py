@@ -143,6 +143,7 @@ from pypsa.networkclustering import (
 import networkx as nx
 from geopy.distance import geodesic
 import libpysal
+from pathlib import Path
 
 warnings.filterwarnings(action="ignore", category=UserWarning)
 
@@ -537,6 +538,14 @@ def add_offshore_connections(
     )
     n.links.loc[offshore_lines.index, "capital_cost"] = cable_cost
 
+def insert_custom_bus_loads(n, cldf: pd.DataFrame):
+    """ called after loads are attached based on the normal procedure, only overwrites
+        the busses for which the supplied .csv contains columns.
+    """
+    for col in cldf.columns:
+        logging.info(f"Adding custom bus load for: {col}")
+        n.loads_t.p_set.loc[:, col] = cldf[col].values
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -628,7 +637,7 @@ if __name__ == "__main__":
             hvac_overhead_cost,
             focus_weights,
         )
-
+    print(clustering.network.loads_t.p_set.columns)
     update_p_nom_max(clustering.network)
 
     clustering.network.meta = dict(
@@ -643,6 +652,13 @@ if __name__ == "__main__":
     # )
 
     # add_offshore_connections(clustering.network,costs)
+
+    ## CUSTOM BUS LOADS
+    clfp = snakemake.config.get('custom_loads', {}).get("busbar_insert_curves_file", "no_clfp")
+    if Path(clfp).exists():
+        cldf = pd.read_csv(clfp, index_col=0)
+        if not cldf.empty:
+            insert_custom_bus_loads(clustering.network, cldf)
 
     clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in (
