@@ -274,6 +274,40 @@ def add_DC_connections(
     )
     n.links.loc[offshore_links.index, "capital_cost"] = cable_cost
 
+def attach_hydrogen_loads(n, enable_config):
+    
+    h2fp = enable_config['hydrogen_contant_loads_at_nodes']
+    try:
+        h2df = pd.read_csv(h2fp, index_col=0)   
+    except:
+        logger.warning(f"Invalid hydrogen load filepath supplied: '{h2fp}'")
+        return None
+    
+    if h2df.empty:
+        logging.info(f"Not adding hydrogen demands since the demands supplied are empty")
+        return None
+    else:
+        bus_string = ""
+        for col in h2df.index:
+            bus = col + " H2"
+            if not (bus in n.stores.index):
+                raise ValueError(f"Hydrogen bus does not exist in network: {bus}.")
+
+            else:
+                value = h2df.at[col, h2df.columns[0]]
+                bus_string += f"\t{bus}, {int(value)} MW\n"
+
+        h2df.index = [str(i) + " H2" for i in h2df.index]
+        logging.info(f"Adding constant hydrogen demands:\n{bus_string}")
+        n.madd(
+            "Load",
+            suffix=" load",
+            names=h2df.index,
+            carrier="H2",
+            bus=h2df.index,
+            p_set=h2df.constant_power_MW,
+        ) 
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -297,6 +331,7 @@ if __name__ == "__main__":
     attach_storageunits(n, costs, elec_config)
     attach_stores(n, costs, elec_config)
     attach_hydrogen_pipelines(n, costs, elec_config)
+    attach_hydrogen_loads(n, snakemake.config['enable'])
 
     add_nice_carrier_names(n, snakemake.config)
 
