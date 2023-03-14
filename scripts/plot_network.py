@@ -123,6 +123,7 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
         line_widths_exp = n.lines.s_nom_opt
         line_widths_cur = n.lines.s_nom_min
         link_widths_exp = n.links.p_nom_opt
+        # link_widths_exp.loc[link_widths_exp.index.str.contains('H2')] = 0.0
         link_widths_cur = n.links.p_nom_min
     else:
         raise "plotting of {} has not been implemented yet".format(attribute)

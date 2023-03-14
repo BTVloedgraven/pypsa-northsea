@@ -470,7 +470,6 @@ def add_offshore_connections(
     # Create line for every offshore bus and connect it to onshore buses
     onshore_coords = n.buses.loc[~n.buses.index.str.contains("off"), ["x", "y"]]
     offshore_coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
-    print(offshore_coords.index)
     coords = pd.concat([onshore_coords, offshore_coords])
 
     # works better than with closest neighbors. maybe only create graph like this for offshore buses:
@@ -637,7 +636,6 @@ if __name__ == "__main__":
             hvac_overhead_cost,
             focus_weights,
         )
-    print(clustering.network.loads_t.p_set.columns)
     update_p_nom_max(clustering.network)
 
     clustering.network.meta = dict(

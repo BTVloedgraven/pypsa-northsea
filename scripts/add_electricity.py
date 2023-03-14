@@ -519,17 +519,6 @@ def add_offshore_connections(
 
     offshore_lines = nx.to_pandas_edgelist(offshore_line_graph)
 
-    # remove lines which intersect with onshore shapes
-    # lines_filter = offshore_lines.apply(
-    #     lambda x: LineString(
-    #         [n.buses.loc[x.source, ["x", "y"]], n.buses.loc[x.target, ["x", "y"]]]
-    #     ),
-    #     axis=1,
-    # )
-    # onshore_shape = onshore_regions.unary_union
-    # lines_filter = lines_filter.apply(lambda x: x.intersects(onshore_shape))
-    # offshore_lines.drop(offshore_lines[lines_filter].index, inplace=True)
-
     _, ind = tree.query(np.radians(onshore_coords), k=1)
     # Build line graph to connect all offshore nodes and
     on_line_graph = nx.Graph()
@@ -570,24 +559,6 @@ def add_offshore_connections(
         + costs.at["offwind-ac-station", "capital_cost"]
     )
     n.lines.loc[lines_df.index, "capital_cost"] = cable_cost
-
-    # n.madd(
-    #     "Link",
-    #     names=lines_df.index,
-    #     carrier="DC",
-    #     bus0=lines_df["bus0"].values,
-    #     bus1=lines_df["bus1"].values,
-    #     length=lines_df["length"].values,
-    # )
-    # # attach cable cost DC for offshore grid lines
-    # line_length_factor = snakemake.config["lines"]["length_factor"]
-    # cable_cost = n.links.loc[lines_df.index, "length"].apply(
-    #     lambda x: x
-    #     * line_length_factor
-    #     * costs.at["offwind-dc-connection-submarine", "capital_cost"]
-    #     + costs.at["offwind-ac-station", "capital_cost"]
-    # )
-    # n.links.loc[lines_df.index, "capital_cost"] = cable_cost
 
 def attach_conventional_generators(
     n,

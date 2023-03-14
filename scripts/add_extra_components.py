@@ -207,7 +207,7 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
     # determine bus pairs
     attrs = ["bus0", "bus1", "length"]
     candidates = pd.concat(
-        [n.lines[attrs], n.links.query('carrier=="DC"')[attrs]]
+        [n.lines[attrs]]
     ).reset_index(drop=True)
 
     # remove bus pair duplicates regardless of order of bus0 and bus1

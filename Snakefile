@@ -716,6 +716,26 @@ rule plot_network:
     script:
         "scripts/plot_network.py"
 
+rule test_plot:
+    input:
+        network="results/networks/"
+        + RDIR
+        + "13_03_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        tech_costs=COSTS,
+    output:
+        only_map="results/plots/"
+        + RDIR
+        + "14_03_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
+        ext="results/plots/"
+        + RDIR
+        + "14_03_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
+    log:
+        "logs/"
+        + RDIR
+        + "plot_network/14_03_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
+    script:
+        "scripts/plot_network.py"
+
 
 def input_make_summary(w):
     # It's mildly hacky to include the separate costs input as first entry
