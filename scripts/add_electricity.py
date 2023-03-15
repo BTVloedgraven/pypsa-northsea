@@ -1015,10 +1015,10 @@ if __name__ == "__main__":
         snakemake.input.busmap_offshore,
     )
 
-    add_offshore_connections(
-        n,
-        costs,
-    )
+    # add_offshore_connections(
+    #     n,
+    #     costs,
+    # )
 
     if "estimate_renewable_capacities" not in snakemake.config["electricity"]:
         logger.warning(

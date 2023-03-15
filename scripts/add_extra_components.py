@@ -230,6 +230,66 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         carrier="H2 pipeline",
     )
 
+def add_AC_connections(
+    n,
+    costs,
+):
+    # Create line for every offshore bus and connect it to onshore buses
+    onshore_buses = ["NL1 0", "NL1 1", "NL1 3", "NL1 4", "DE1 4", "DK1 0", "NO2 0", "GB0 0", "GB0 1", "BE1 1"]
+    onshore_coords = n.buses.loc[n.buses.index.isin(onshore_buses), ["x", "y"]]
+    # onshore_coords = n.buses.loc[~n.buses.index.str.contains("off"), ["x", "y"]]
+    offshore_coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
+
+    coords = pd.concat([onshore_coords, offshore_coords])
+
+    tree = BallTree(
+        np.radians(coords), leaf_size=40, metric="haversine"
+    )
+
+    # works better than with closest neighbors. maybe only create graph like this for offshore buses:
+    cells, generators = libpysal.cg.voronoi_frames(
+        coords.values, clip="convex hull"
+    )
+    delaunay = libpysal.weights.Rook.from_dataframe(cells)
+    offshore_line_graph = delaunay.to_networkx()
+    offshore_line_graph = nx.relabel_nodes(
+        offshore_line_graph, dict(zip(offshore_line_graph, coords.index))
+    )
+
+    lines_df = nx.to_pandas_edgelist(offshore_line_graph)
+
+    lines_df = lines_df.rename(
+        columns={"source": "bus0", "target": "bus1", "weight": "length"}
+    ).astype({"bus0": "string", "bus1": "string", "length": "float"})
+    lines_df.drop(lines_df.loc[~lines_df.bus0.str.contains('off') & ~lines_df.bus1.str.contains('off')].index, inplace=True)
+    coords["xy"] = list(map(tuple, (coords[["x", "y"]]).values))
+
+    lines_df.loc[:, "length"] = lines_df.apply(
+        lambda x: geodesic(coords.loc[x.bus0, "xy"], coords.loc[x.bus1, "xy"]).km,
+        axis=1,
+    )
+    lines_df.drop(lines_df.query("length==0").index, inplace=True)
+    lines_df.index = "off_AC_" + lines_df.index.astype("str")
+
+    n.madd(
+        "Line",
+        names=lines_df.index,
+        bus0=lines_df["bus0"].values,
+        bus1=lines_df["bus1"].values,
+        length=lines_df["length"].values,
+        type = 'Al/St 240/40 4-bundle 380.0',
+        num_parallel = 0
+    )
+    # attach cable cost AC for offshore grid lines
+    line_length_factor = snakemake.config["lines"]["length_factor"]
+    cable_cost = n.lines.loc[lines_df.index, "length"].apply(
+        lambda x: x
+        * line_length_factor
+        * costs.at["offwind-ac-connection-submarine", "capital_cost"]
+        + costs.at["offwind-ac-station", "capital_cost"]
+    )
+    n.lines.loc[lines_df.index, "capital_cost"] = cable_cost
+
 def add_DC_connections(
     n,
     costs,
@@ -321,6 +381,11 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
     costs = load_costs(
         snakemake.input.tech_costs, snakemake.config["costs"], elec_config, Nyears
+    )
+
+    add_AC_connections(
+        n,
+        costs,
     )
 
     add_DC_connections(
