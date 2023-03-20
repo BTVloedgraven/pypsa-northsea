@@ -86,6 +86,14 @@ electrolysis,2050,investment,395.0,EUR/kWel,https://iea.blob.core.windows.net/as
 electrolysis,2050,FOM,1.5,%/year,BEIS 21
 electrolysis,2050,lifetime,20.0,years,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis,2050,efficiency,0.8,per unit,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
+electrolysis offshore,2040,investment,800,EUR/kWel,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
+electrolysis offshore,2040,FOM,1.5,%/year,BEIS 21
+electrolysis offshore,2040,lifetime,20.0,years,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
+electrolysis offshore,2040,efficiency,0.75,per unit,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
+electrolysis offshore,2050,investment,500,EUR/kWel,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
+electrolysis offshore,2050,FOM,1.5,%/year,BEIS 21
+electrolysis offshore,2050,lifetime,20.0,years,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
+electrolysis offshore,2050,efficiency,0.8,per unit,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 fuel cell,2040,investment,728.0,EUR/kWel,IEA perspectives and prjected costs
 fuel cell,2040,FOM,5.0,%/year,IEA tech roadmap
 fuel cell,2040,lifetime,20.0,years,IEA tech roadmap
@@ -106,6 +114,14 @@ H2 pipeline,2050,investment,193.0,EUR/MW/km,Gas for Climate large pipe 60/40 rep
 H2 pipeline,2050,lifetime,40.0,years,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
 H2 pipeline,2050,FOM,5.0,%/year,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
 H2 pipeline,2050,efficiency,0.98,per unit,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
+H2 pipeline offshore,2040,investment,250.0,EUR/MW/km,Gas for Climate large pipe 60/40 reporpose/new https://gasforclimate2050.eu/wp-content/uploads/2022/04/EHB-A-European-hydrogen-infrastructure-vision-covering-28-countries.pdf
+H2 pipeline offshore,2040,lifetime,40.0,years,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
+H2 pipeline offshore,2040,FOM,5.0,%/year,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
+H2 pipeline offshore,2040,efficiency,0.98,per unit,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
+H2 pipeline offshore,2050,investment,250.0,EUR/MW/km,Gas for Climate large pipe 60/40 reporpose/new https://gasforclimate2050.eu/wp-content/uploads/2022/04/EHB-A-European-hydrogen-infrastructure-vision-covering-28-countries.pdf
+H2 pipeline offshore,2050,lifetime,40.0,years,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
+H2 pipeline offshore,2050,FOM,5.0,%/year,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
+H2 pipeline offshore,2050,efficiency,0.98,per unit,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
 HVAC overhead,2040,investment,400.0,EUR/MW/km,Hagspiel
 HVAC overhead,2040,lifetime,40.0,years,Hagspiel
 HVAC overhead,2040,FOM,2.0,%/year,Hagspiel
@@ -136,9 +152,9 @@ hydro,2040,FOM,2.2,%/year,IEA2010
 hydro,2050,lifetime,80.0,years,IEA2020-2
 hydro,2050,investment,2437.0,EUR/kWel,IEA2020-2
 hydro,2050,FOM,2.2,%/year,IEA2010
-hydrogen underground storage,2040,investment,0.02,EUR/kWh,NREL 09
+hydrogen underground storage,2040,investment,6,EUR/kWh,NREL 09
 hydrogen underground storage,2040,lifetime,40.0,years,NREL 09
-hydrogen underground storage,2050,investment,0.02,EUR/kWh,NREL 09
+hydrogen underground storage,2050,investment,6,EUR/kWh,NREL 09
 hydrogen underground storage,2050,lifetime,40.0,years,NREL 09
 lignite,2040,lifetime,40.0,years,IEA2020-2
 lignite,2040,investment,1700.0,EUR/kWel,Frauenhofer

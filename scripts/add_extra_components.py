@@ -109,10 +109,14 @@ def attach_stores(n, costs, elec_opts):
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     buses_i = n.buses.index
+    buses_on_i = buses_i[~buses_i.str.contains('off')]
+    buses_off_i = buses_i[buses_i.str.contains('off')]
     bus_sub_dict = {k: n.buses[k].values for k in ["x", "y", "country"]}
 
     if "H2" in carriers:
         h2_buses_i = n.madd("Bus", buses_i + " H2", carrier="H2", **bus_sub_dict)
+        h2_buses_on_i = h2_buses_i[~h2_buses_i.str.contains('off')]
+        h2_buses_off_i = h2_buses_i[h2_buses_i.str.contains('off')]
 
         n.madd(
             "Store",
@@ -121,14 +125,14 @@ def attach_stores(n, costs, elec_opts):
             carrier="H2",
             e_nom_extendable=True,
             e_cyclic=True,
-            capital_cost=costs.at["hydrogen storage underground", "capital_cost"],
+            capital_cost=costs.at["hydrogen underground storage", "capital_cost"],
         )
 
         n.madd(
             "Link",
-            h2_buses_i + " Electrolysis",
-            bus0=buses_i,
-            bus1=h2_buses_i,
+            h2_buses_on_i + " Electrolysis",
+            bus0=buses_on_i,
+            bus1=h2_buses_on_i,
             carrier="H2 electrolysis",
             p_nom_extendable=True,
             efficiency=costs.at["electrolysis", "efficiency"],
@@ -138,9 +142,21 @@ def attach_stores(n, costs, elec_opts):
 
         n.madd(
             "Link",
-            h2_buses_i + " Fuel Cell",
-            bus0=h2_buses_i,
-            bus1=buses_i,
+            h2_buses_off_i + " Electrolysis",
+            bus0=buses_off_i,
+            bus1=h2_buses_off_i,
+            carrier="H2 electrolysis",
+            p_nom_extendable=True,
+            efficiency=costs.at["electrolysis offshore", "efficiency"],
+            capital_cost=costs.at["electrolysis offshore", "capital_cost"],
+            marginal_cost=costs.at["electrolysis offshore", "marginal_cost"],
+        )
+
+        n.madd(
+            "Link",
+            h2_buses_on_i + " Fuel Cell",
+            bus0=h2_buses_on_i,
+            bus1=buses_on_i,
             carrier="H2 fuel cell",
             p_nom_extendable=True,
             efficiency=costs.at["fuel cell", "efficiency"],
@@ -216,17 +232,31 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
     ]
     h2_links.index = h2_links.apply(lambda c: f"H2 pipeline {c.bus0}-{c.bus1}", axis=1)
 
+    off_h2_links = h2_links.loc[h2_links.index.str.contains('off')]
+    on_h2_links = h2_links.loc[~h2_links.index.str.contains('off')]
+
     # add pipelines
     n.madd(
         "Link",
-        h2_links.index,
-        bus0=h2_links.bus0.values + " H2",
-        bus1=h2_links.bus1.values + " H2",
-        p_min_pu=-1,
+        on_h2_links.index,
+        bus0=on_h2_links.bus0.values + " H2",
+        bus1=on_h2_links.bus1.values + " H2",
         p_nom_extendable=True,
-        length=h2_links.length.values,
-        capital_cost=costs.at["H2 pipeline", "capital_cost"] * h2_links.length,
+        length=on_h2_links.length.values,
+        capital_cost=costs.at["H2 pipeline", "capital_cost"] * on_h2_links.length,
         efficiency=costs.at["H2 pipeline", "efficiency"],
+        carrier="H2 pipeline",
+    )
+
+    n.madd(
+        "Link",
+        off_h2_links.index,
+        bus0=off_h2_links.bus0.values + " H2",
+        bus1=off_h2_links.bus1.values + " H2",
+        p_nom_extendable=True,
+        length=off_h2_links.length.values,
+        capital_cost=costs.at["H2 pipeline offshore", "capital_cost"] * off_h2_links.length,
+        efficiency=costs.at["H2 pipeline offshore", "efficiency"],
         carrier="H2 pipeline",
     )
 
