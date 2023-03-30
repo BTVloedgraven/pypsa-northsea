@@ -11,7 +11,7 @@ def calculate_area(shape, ellipsoid="WGS84"):
     geod = Geod(ellps=ellipsoid)
     return abs(geod.geometry_area_perimeter(shape)[0]) / 1e6
 
-def fill_shape_with_points(shape, num=50):
+def fill_shape_with_points(shape, num=100):
     """
     Fills the shape of the offshore region with points. This is needed for
     splitting the regions into smaller regions.

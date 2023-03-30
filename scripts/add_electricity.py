@@ -454,7 +454,6 @@ def attach_wind_and_solar(
                         )
                         * Nyears
                     )
-                    print(calculate_offwind_cost(**kwargs))
                 else:
                     turbine_cost = costs.at[tech, "capital_cost"]
                 capital_cost = turbine_cost + grid_connection_cost

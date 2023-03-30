@@ -133,6 +133,7 @@ import pandas as pd
 import pyomo.environ as po
 import pypsa
 import seaborn as sns
+import xarray as xr
 from _helpers import configure_logging, get_aggregation_strategies, update_p_nom_max
 from pypsa.networkclustering import (
     busmap_by_greedy_modularity,
@@ -463,80 +464,6 @@ def plot_busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algori
         plt.savefig(fn, bbox_inches="tight")
     del cs, cr
 
-def add_offshore_connections(
-    n,
-    costs,
-):
-    # Create line for every offshore bus and connect it to onshore buses
-    onshore_coords = n.buses.loc[~n.buses.index.str.contains("off"), ["x", "y"]]
-    offshore_coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
-    coords = pd.concat([onshore_coords, offshore_coords])
-
-    # works better than with closest neighbors. maybe only create graph like this for offshore buses:
-    cells, generators = libpysal.cg.voronoi_frames(
-        coords.values, clip="convex hull"
-    )
-    coords["xy"] = list(map(tuple, (coords[["x", "y"]]).values))
-    delaunay = libpysal.weights.Rook.from_dataframe(cells)
-    offshore_line_graph = delaunay.to_networkx()
-    offshore_line_graph = nx.relabel_nodes(
-        offshore_line_graph, dict(zip(offshore_line_graph, coords.index))
-    )
-
-    offshore_lines = nx.to_pandas_edgelist(offshore_line_graph)
-
-    offshore_lines = offshore_lines.rename(
-        columns={"source": "bus0", "target": "bus1", "weight": "length"}
-    ).astype({"bus0": "string", "bus1": "string", "length": "float"})
-
-    offshore_lines.loc[:, "length"] = offshore_lines.apply(
-        lambda x: geodesic(coords.loc[x.bus0, "xy"], coords.loc[x.bus1, "xy"]).km,
-        axis=1,
-    )
-    offshore_lines.drop(offshore_lines.query("length==0").index, inplace=True)
-
-    bus0_on = ~offshore_lines.bus0.str.contains('off')
-    bus1_on = ~offshore_lines.bus1.str.contains('off')
-
-    offshore_lines.drop(offshore_lines.loc[(bus0_on)].loc[(bus1_on)].index, inplace=True)
-    offshore_lines.index = "off_" + offshore_lines.index.astype("str")
-
-    # n.madd(
-    #     "Line",
-    #     names=offshore_lines.index,
-    #     v_nom=380,
-    #     bus0=offshore_lines["bus0"].values,
-    #     bus1=offshore_lines["bus1"].values,
-    #     length=offshore_lines["length"].values,
-    # )
-    # # attach cable cost AC for offshore grid lines
-    # line_length_factor = snakemake.config["lines"]["length_factor"]
-    # cable_cost = n.lines.loc[offshore_lines.index, "length"].apply(
-    #     lambda x: x
-    #     * line_length_factor
-    #     * costs.at["offwind-ac-connection-submarine", "capital_cost"]
-    #     + costs.at["offwind-ac-station", "capital_cost"]
-    # )
-    # n.lines.loc[offshore_lines.index, "capital_cost"] = cable_cost
-
-    n.madd(
-        "Link",
-        names=offshore_lines.index,
-        carrier="DC",
-        bus0=offshore_lines["bus0"].values,
-        bus1=offshore_lines["bus1"].values,
-        length=offshore_lines["length"].values,
-    )
-    # attach cable cost DC for offshore grid lines
-    line_length_factor = snakemake.config["lines"]["length_factor"]
-    cable_cost = n.links.loc[offshore_lines.index, "length"].apply(
-        lambda x: x
-        * line_length_factor
-        * costs.at["offwind-dc-connection-submarine", "capital_cost"]
-        + costs.at["offwind-dc-station", "capital_cost"]
-    )
-    n.links.loc[offshore_lines.index, "capital_cost"] = cable_cost
-
 def insert_custom_bus_loads(n, cldf: pd.DataFrame):
     """ called after loads are attached based on the normal procedure, only overwrites
         the busses for which the supplied .csv contains columns.
@@ -642,21 +569,19 @@ if __name__ == "__main__":
         snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
     )
 
-    # costs = load_costs(
-    #     snakemake.input.tech_costs,
-    #     snakemake.config["costs"],
-    #     snakemake.config["electricity"],
-    #     Nyears,
-    # )
-
-    # add_offshore_connections(clustering.network,costs)
-
     ## CUSTOM BUS LOADS
     clfp = snakemake.config.get('custom_loads', {}).get("busbar_insert_curves_file", "no_clfp")
     if Path(clfp).exists():
         cldf = pd.read_csv(clfp, index_col=0)
         if not cldf.empty:
             insert_custom_bus_loads(clustering.network, cldf)
+
+    with xr.open_dataset(snakemake.input.gebco) as gebco:
+        gebco=gebco.rename({"lon":"x", "lat":"y"})
+        elevation = gebco.elevation
+        clustering.network.buses['water_depth']=clustering.network.buses.apply(lambda bus: float(elevation.interp(x=bus.x, y=bus.y)), axis=1)
+
+    clustering.network.buses.to_csv('buses.csv')
 
     clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in (

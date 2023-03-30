@@ -56,6 +56,7 @@ import numpy as np
 import pandas as pd
 import libpysal
 import pypsa
+import xarray as xr
 from _helpers import configure_logging
 from add_electricity import (
     _add_missing_carriers_from_costs,
@@ -260,6 +261,13 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         carrier="H2 pipeline",
     )
 
+def calculate_station_cost(WD):
+    capex = (
+        (400+1*(-WD-25))
+        * 1000
+    )  # in €/MW
+    return capex
+
 def add_AC_connections(
     n,
     costs,
@@ -320,6 +328,22 @@ def add_AC_connections(
     )
     n.lines.loc[lines_df.index, "capital_cost"] = cable_cost
 
+def calculate_annuity(n, r):
+    """
+    Calculate the annuity factor for an asset with lifetime n years and.
+
+    discount rate of r, e.g. annuity(20, 0.05) * 20 = 1.6
+    """
+
+    if isinstance(r, pd.Series):
+        return pd.Series(1 / n, index=r.index).where(
+            r == 0, r / (1.0 - 1.0 / (1.0 + r) ** n)
+        )
+    elif r > 0:
+        return r / (1.0 - 1.0 / (1.0 + r) ** n)
+    else:
+        return 1 / n
+
 def add_DC_connections(
     n,
     costs,
@@ -360,9 +384,25 @@ def add_DC_connections(
         lambda x: x
         * line_length_factor
         * costs.at["offwind-dc-connection-submarine", "capital_cost"]
-        + costs.at["offwind-dc-station", "capital_cost"]
+        # + costs.at["offwind-dc-station", "capital_cost"]
     )
-    n.links.loc[offshore_links.index, "capital_cost"] = cable_cost
+
+    station_cost = (
+        calculate_station_cost(**{"WD": n.buses["water_depth"]})
+        * (
+            calculate_annuity(
+                costs.at['offwind-dc-station', "lifetime"],
+                costs.at['offwind-dc-station', "discount rate"],
+            )
+            + costs.at['offwind-dc-station', "FOM"] / 100.0
+        )
+        * Nyears
+    )
+    station_cost_link = n.links.loc[offshore_links.index, "bus0"].apply(
+        lambda x: station_cost.loc[x]
+    )
+    n.links.loc[offshore_links.index, "capital_cost"] = cable_cost + station_cost_link
+    print(n.links.loc[offshore_links.index, "capital_cost"])
 
 def attach_hydrogen_loads(n, enable_config):
     

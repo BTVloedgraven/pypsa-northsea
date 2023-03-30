@@ -498,6 +498,7 @@ rule cluster_network:
             else []
         ),
         tech_costs=COSTS,
+        gebco="data/bundle/GEBCO_2014_2D.nc",
     output:
         network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
         regions_onshore="resources/"
@@ -562,6 +563,9 @@ rule add_extra_components:
     input:
         network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
         tech_costs=COSTS,
+        **{
+            f"profile_offwind-dc": "resources/" + RDIR + f"profile_offwind-dc.nc"
+        },
     output:
         "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
     log:
