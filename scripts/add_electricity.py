@@ -515,7 +515,7 @@ def move_generators(
 
     move_generators = move_generators[move_generators.isin(n.buses.index)]
     n.generators.loc[move_generators.index, "bus"] = move_generators.busmap
-    # only consider turbine cost and substation cost for offshore generators connected to offshore grid
+    # only consider turbine cost for offshore generators connected to offshore grid
     n.generators.loc[move_generators.index, "capital_cost"] = (
         n.generators.loc[move_generators.index, "turbine_cost"]
     )

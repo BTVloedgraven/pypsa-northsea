@@ -261,13 +261,6 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         carrier="H2 pipeline",
     )
 
-def calculate_station_cost(WD):
-    capex = (
-        (400+1*(-WD-25))
-        * 1000
-    )  # in €/MW
-    return capex
-
 def add_AC_connections(
     n,
     costs,
@@ -384,11 +377,14 @@ def add_DC_connections(
         lambda x: x
         * line_length_factor
         * costs.at["offwind-dc-connection-submarine", "capital_cost"]
-        # + costs.at["offwind-dc-station", "capital_cost"]
     )
 
-    station_cost = (
-        calculate_station_cost(**{"WD": n.buses["water_depth"]})
+    cost_per_m_depth = snakemake.config['costs']['dc_station_depth_cost']
+    reference_depth = snakemake.config['costs']['dc_station_reference_depth']
+    capex_depth = cost_per_m_depth*(-n.buses["water_depth"]-reference_depth) # in €/MW
+
+    capital_costs_depth = (
+        capex_depth
         * (
             calculate_annuity(
                 costs.at['offwind-dc-station', "lifetime"],
@@ -398,11 +394,10 @@ def add_DC_connections(
         )
         * Nyears
     )
-    station_cost_link = n.links.loc[offshore_links.index, "bus0"].apply(
-        lambda x: station_cost.loc[x]
+    capital_costs_depth_link = n.links.loc[offshore_links.index, "bus0"].apply(
+        lambda x: capital_costs_depth.loc[x]
     )
-    n.links.loc[offshore_links.index, "capital_cost"] = cable_cost + station_cost_link
-    print(n.links.loc[offshore_links.index, "capital_cost"])
+    n.links.loc[offshore_links.index, "capital_cost"] = cable_cost + capital_costs_depth_link + costs.at["offwind-dc-station", "capital_cost"]
 
 def attach_hydrogen_loads(n, enable_config):
     

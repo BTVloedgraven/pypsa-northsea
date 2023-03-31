@@ -449,7 +449,7 @@ rule add_electricity:
         load="resources/" + RDIR + "load.csv",
         nuts3_shapes="resources/" + RDIR + "nuts3_shapes.geojson",
         gebco="data/bundle/GEBCO_2014_2D.nc",
-        busmap_offshore="resources/" + RDIR + "busmap_offshore.csv",
+        busmap_offshore="data/" + RDIR + "custom_busmap_offshore.csv",
     output:
         "networks/" + RDIR + "elec.nc",
     log:
