@@ -1,0 +1,3 @@
+[submodule "PyPSA_eos"]
+	path = PyPSA_eos
+	url = https://github.com/BTVloedgraven/PyPSA_eos.git
