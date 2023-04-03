@@ -581,8 +581,6 @@ if __name__ == "__main__":
         elevation = gebco.elevation
         clustering.network.buses['water_depth']=clustering.network.buses.apply(lambda bus: float(elevation.interp(x=bus.x, y=bus.y)), axis=1)
 
-    clustering.network.buses.to_csv('buses.csv')
-
     clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in (
         "busmap",
