@@ -631,7 +631,8 @@ def memory(w):
 rule solve_network:
     input:
         "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-        "data/" + RDIR + "agg_p_nom_minmax.csv"
+        "data/" + RDIR + "agg_p_nom_minmax.csv",
+        tech_costs=COSTS,
     output:
         "results/networks/"
         + RDIR
@@ -724,21 +725,21 @@ rule test_plot:
     input:
         network="results/networks/"
         + RDIR
-        + "13_03_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "05_04_2023_2_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         tech_costs=COSTS,
     output:
         only_map="results/plots/"
         + RDIR
-        + "14_03_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
+        + "05_04_2023_2_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
         ext="results/plots/"
         + RDIR
-        + "14_03_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
+        + "05_04_2023_2_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
     log:
         "logs/"
         + RDIR
-        + "plot_network/14_03_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
+        + "plot_network/05_04_2_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
     script:
-        "scripts/plot_network.py"
+        "scripts/plot_h2_network.py"
 
 
 def input_make_summary(w):

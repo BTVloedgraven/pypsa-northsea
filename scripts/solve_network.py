@@ -97,6 +97,7 @@ from pypsa.linopf import (
 )
 from vresutils.benchmark import memory_logger
 from pathlib import Path
+from add_electricity import load_costs
 
 logger = logging.getLogger(__name__)
 
@@ -147,8 +148,108 @@ def prepare_network(n, solve_opts):
 
     return n
 
+def get_efficiencies(n, h2_gens_2_links):
+    efficencies = {}
+    for carrier in h2_gens_2_links:
+        try:
+            efficencies.update({
+                carrier: n.costs[n.costs.index.str.contains(carrier)].efficiency[0]
+            })
+        except:
+            parent = carrier.split("-")[0]
+            efficencies.update({
+                carrier: n.costs[n.costs.index.str.contains(parent)].efficiency[0]
+            })
+    return efficencies
 
 def add_CCL_constraints(n, config):
+    agg_p_nom_limits = config["electricity"].get("agg_p_nom_limits")
+
+    try:
+        agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=0)
+    except IOError:
+        logger.exception(
+            "Need to specify the path to a .csv file containing "
+            "aggregate capacity limits per country in "
+            "config['electricity']['agg_p_nom_limit']."
+        )
+    logger.info(
+        "Adding per carrier generation capacity constraints for " "individual countries"
+    )
+
+    h2_gens_2_links = config["enable"].get("legacy_gt_to_hydrogen", [])
+    eff = get_efficiencies(n, h2_gens_2_links)
+    link_agg = (
+        agg_p_nom_minmax.query("carrier in @h2_gens_2_links")
+        .set_index("carrier", append=True)
+        .apply(
+            lambda row: [
+                round(row["min"] / eff[row.name[1]], 2),
+                round(row["max"] / eff[row.name[1]], 2),
+            ],
+            axis=1,
+            result_type="broadcast",
+        )
+    )
+
+    other_allowed_links = ["H2 electrolysis"]
+    link_agg_others = (
+        agg_p_nom_minmax.query("carrier in @other_allowed_links")
+        .set_index("carrier", append=True)
+    )
+
+    link_agg_total = pd.concat([link_agg, link_agg_others], axis=0)
+
+    gen_carriers = n.generators.carrier.unique()
+    gen_agg = agg_p_nom_minmax.query("carrier in @gen_carriers").set_index(
+        "carrier", append=True
+    )
+
+    storage_unit_carriers = n.storage_units.carrier.unique()
+    storage_unit_agg = agg_p_nom_minmax.query(
+        "carrier in @storage_unit_carriers"
+    ).set_index("carrier", append=True)
+
+    components_aggs = {
+        "Generator": gen_agg,
+        "Link": link_agg_total,
+        "StorageUnit": storage_unit_agg,
+    }
+
+    for klass, t_agg_p_nom_minmax in components_aggs.items():
+        if not t_agg_p_nom_minmax.empty:
+            attr = n.components[klass]["list_name"]
+            t_df = getattr(n, attr)
+            try:
+                country = t_df.bus.map(n.buses.country)
+            except:
+                country = t_df.bus0.map(n.buses.country)
+            # cc means country and carrier
+            p_nom_per_cc = (
+                pd.DataFrame(
+                    {
+                        "p_nom": linexpr((1, get_var(n, klass, "p_nom"))),
+                        "country": country,
+                        "carrier": t_df.carrier,
+                    }
+                )
+                .dropna(subset=["p_nom"])
+                .groupby(["country", "carrier"])
+                .p_nom.apply(join_exprs)
+            )
+
+            minimum = t_agg_p_nom_minmax["min"].dropna()
+            if not minimum.empty:
+                minconstraint = define_constraints(
+                    n, p_nom_per_cc[minimum.index], ">=", minimum, "agg_p_nom", "min"
+                )
+            maximum = t_agg_p_nom_minmax["max"].dropna()
+            if not maximum.empty:
+                maxconstraint = define_constraints(
+                    n, p_nom_per_cc[maximum.index], "<=", maximum, "agg_p_nom", "max"
+                )
+
+def add_CCL_constraints_default(n, config):
     try:
         agg_p_nom_minmax = pd.read_csv(snakemake.input[1], index_col=list(range(2)))
     except IOError:
@@ -369,7 +470,7 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
 
 
-def solve_network(n, config, opts="", **kwargs):
+def solve_network(n, config, tech_cost, opts="", **kwargs):
     solver_options = config["solving"]["solver"].copy()
     solver_name = solver_options.pop("name")
     cf_solving = config["solving"]["options"]
@@ -380,6 +481,13 @@ def solve_network(n, config, opts="", **kwargs):
     # add to network for extra_functionality
     n.config = config
     n.opts = opts
+    n.costs = load_costs(
+        tech_cost,
+        config["costs"],
+        config["electricity"],
+        Nyears=1,
+        legacy_gt_to_hydrogen=config["enable"].get("legacy_gt_to_hydrogen", False),
+    )
 
     skip_iterations = cf_solving.get("skip_iterations", False)
     if not n.lines.s_nom_extendable.any():
@@ -430,6 +538,7 @@ if __name__ == "__main__":
         n = solve_network(
             n,
             snakemake.config,
+            snakemake.input.tech_costs,
             opts,
             solver_dir=tmpdir,
             solver_logfile=snakemake.log.solver,

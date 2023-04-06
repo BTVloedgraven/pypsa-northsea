@@ -49,9 +49,10 @@ enable:
   retrieve_natura_raster: true
   build_custom_busmap: true
   custom_busmap: true
-  # legacy_gt_to_hydrogen: ['CCGT', 'OCGT', 'CCGT-nextgen', 'OCGT-nextgen'] #! custom WB
+  legacy_gt_to_hydrogen: ['CCGT', 'OCGT', 'CCGT-nextgen', 'OCGT-nextgen'] #! custom WB
   # will connect all listed carriers to the hydrogen buses and infer zero fuel cost and emmisions for these technologies
   extendable_carriers_to_all_nodes: true #! custom WB
+  extendable_generators: [OCGT-nextgen, CCGT-nextgen, nuclear_nextgen, BECCS, DAC]
   # used to allow all next-gen technologies to be placed at every node
   hydrogen_contant_loads_at_nodes: 'data/hydrogen_demand_per_bus.csv' #! custom WB
   # used to apply a custom hydrogen load at every node based on synthesis data from Agora and IRENA
@@ -75,7 +76,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT]
+    Generator: [OCGT-nextgen, CCGT-nextgen, nuclear_nextgen, BECCS, DAC, solar, onwind, offwind-ac, offwind-dc, OCGT]
     StorageUnit: [] # battery, H2
     Store: [battery, H2]
     Link: [H2 pipeline] # H2 pipeline
@@ -309,6 +310,7 @@ solving:
     AggFill: 0
     PreDual: 0
     GURO_PAR_BARDENSETHRESH: 200
+    NodeMethod: 2
   # solver:
   #   name: cplex
   #   threads: 4

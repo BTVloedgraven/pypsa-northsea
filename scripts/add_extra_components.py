@@ -399,6 +399,30 @@ def add_DC_connections(
     )
     n.links.loc[offshore_links.index, "capital_cost"] = cable_cost + capital_costs_depth_link + costs.at["offwind-dc-station", "capital_cost"]
 
+def attach_GT_to_hydrogen(n, legacy_gt_to_hydrogen):
+    
+    carriers = legacy_gt_to_hydrogen
+    
+    gas_turbines = n.generators.query("carrier in @carriers")
+    n.mremove("Generator", gas_turbines.index)
+
+    buses_i = gas_turbines.bus
+    h2_buses_i = gas_turbines.bus + " H2"
+
+    n.madd("Link",
+        gas_turbines.index,
+        bus0=h2_buses_i,
+        bus1=buses_i,
+        carrier=gas_turbines.carrier,
+        p_nom_extendable=gas_turbines.p_nom_extendable,
+        p_nom=gas_turbines.p_nom,
+        p_nom_max=gas_turbines.p_nom_max,
+        efficiency=gas_turbines.efficiency,
+        #NB: fixed cost is per MWel
+        capital_cost=gas_turbines.capital_cost * gas_turbines.efficiency,
+        marginal_cost=gas_turbines.marginal_cost * gas_turbines.efficiency,
+    )
+
 def attach_hydrogen_loads(n, enable_config):
     
     h2fp = enable_config['hydrogen_contant_loads_at_nodes']
@@ -442,6 +466,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     elec_config = snakemake.config["electricity"]
+    legacy_gt_to_hydrogen = snakemake.config['enable'].get("legacy_gt_to_hydrogen", False)
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
     costs = load_costs(
@@ -461,6 +486,7 @@ if __name__ == "__main__":
     attach_storageunits(n, costs, elec_config)
     attach_stores(n, costs, elec_config)
     attach_hydrogen_pipelines(n, costs, elec_config)
+    attach_GT_to_hydrogen(n, legacy_gt_to_hydrogen)
     attach_hydrogen_loads(n, snakemake.config['enable'])
 
     add_nice_carrier_names(n, snakemake.config)
