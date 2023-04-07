@@ -65,7 +65,9 @@ rule solve_all_networks:
         ),
 
 rule plot_all_networks:
-    input: expand(["results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario'])
+    input: 
+        expand(["results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='p_nom', ext='png', **config['scenario']),
+        expand(["results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}","results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}"], attr='h2', ext='png', **config['scenario'])
 
 rule build_bus_regions_test:
     input:
@@ -725,19 +727,19 @@ rule test_plot:
     input:
         network="results/networks/"
         + RDIR
-        + "05_04_2023_2_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "06_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         tech_costs=COSTS,
     output:
         only_map="results/plots/"
         + RDIR
-        + "05_04_2023_2_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
+        + "06_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
         ext="results/plots/"
         + RDIR
-        + "05_04_2023_2_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
+        + "06_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
     log:
         "logs/"
         + RDIR
-        + "plot_network/05_04_2_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
+        + "plot_network/06_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
     script:
         "scripts/plot_h2_network.py"
 

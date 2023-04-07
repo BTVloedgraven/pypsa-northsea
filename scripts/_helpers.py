@@ -121,9 +121,9 @@ def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     n.loads["carrier"] = n.loads.bus.map(n.buses.carrier) + " load"
     n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
 
-    n.links["carrier"] = (
-        n.links.bus0.map(n.buses.carrier) + "-" + n.links.bus1.map(n.buses.carrier)
-    )
+    # n.links["carrier"] = (
+    #     n.links.bus0.map(n.buses.carrier) + "-" + n.links.bus1.map(n.buses.carrier)
+    # )
     n.lines["carrier"] = "AC line"
     n.transformers["carrier"] = "AC transformer"
 

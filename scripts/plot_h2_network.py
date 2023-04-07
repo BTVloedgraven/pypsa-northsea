@@ -110,7 +110,7 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
     }
     tech_colors = opts["tech_colors"]
 
-    if attribute == "p_nom":
+    if attribute == "h2":
         # bus_sizes = n.generators_t.p.sum().loc[n.generators.carrier == "load"].groupby(n.generators.bus).sum()
         bus_sizes = pd.concat(
             (

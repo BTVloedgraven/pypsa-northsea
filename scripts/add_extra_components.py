@@ -243,9 +243,11 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         bus0=on_h2_links.bus0.values + " H2",
         bus1=on_h2_links.bus1.values + " H2",
         p_nom_extendable=True,
+        p_min_pu = -1,
+        efficiency = 1,
         length=on_h2_links.length.values,
         capital_cost=costs.at["H2 pipeline", "capital_cost"] * on_h2_links.length,
-        efficiency=costs.at["H2 pipeline", "efficiency"],
+        # efficiency=costs.at["H2 pipeline", "efficiency"],
         carrier="H2 pipeline",
     )
 
@@ -255,9 +257,11 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         bus0=off_h2_links.bus0.values + " H2",
         bus1=off_h2_links.bus1.values + " H2",
         p_nom_extendable=True,
+        p_min_pu = -1,
+        efficiency = 1,
         length=off_h2_links.length.values,
         capital_cost=costs.at["H2 pipeline offshore", "capital_cost"] * off_h2_links.length,
-        efficiency=costs.at["H2 pipeline offshore", "efficiency"],
+        # efficiency=costs.at["H2 pipeline offshore", "efficiency"],
         carrier="H2 pipeline",
     )
 
@@ -367,6 +371,8 @@ def add_DC_connections(
         "Link",
         names=offshore_links.index,
         carrier="DC",
+        p_min_pu = -1,
+        efficiency = 1,
         bus0=offshore_links["bus0"].values,
         bus1=offshore_links["bus1"].values,
         length=offshore_links["length"].values,

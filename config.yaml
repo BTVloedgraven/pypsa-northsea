@@ -322,8 +322,11 @@ solving:
 plotting:
   map:
     figsize: [7, 7]
-    boundaries: [-10, 20, 45, 63]
+    boundaries: [-10, 18, 47, 63]
     p_nom:
+      bus_size_factor: 1.e+5
+      linewidth_factor: 3.e+3
+    h2:
       bus_size_factor: 5.e+4
       linewidth_factor: 3.e+3
 
@@ -334,7 +337,7 @@ plotting:
   energy_min: -10000.
   energy_threshold: 50.
 
-  vre_techs: ["onwind", "offwind-ac", "offwind-dc", "solar", "ror"]
+  vre_techs: ["onwind", "offwind-ac", "offwind-dc", "solar", "ror", "H2 electrolysis"]
   conv_techs: ["OCGT", "CCGT", "nuclear", "Coal"]
   storage_techs: ["hydro+PHS", "battery", "H2"]
   load_carriers: ["AC load"]
@@ -386,6 +389,7 @@ plotting:
     "HVDC links": "#8a1caf"
     "DC-DC": "#8a1caf"
     "DC link": "#8a1caf"
+    "H2 electrolysis": "#6895dd"
   nice_names:
     OCGT: "Open-Cycle Gas"
     CCGT: "Combined-Cycle Gas"

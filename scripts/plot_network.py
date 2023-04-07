@@ -118,13 +118,35 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
                 .groupby(["bus", "carrier"])
                 .p_nom_opt.sum(),
                 n.storage_units.groupby(["bus", "carrier"]).p_nom_opt.sum(),
+                n.links.query('carrier == "OCGT" or carrier == "CCGT"')
+                .groupby(["bus1", "carrier"])
+                .p_nom_opt.sum(),
             )
         )
         line_widths_exp = n.lines.s_nom_opt
         line_widths_cur = n.lines.s_nom_min
         link_widths_exp = n.links.p_nom_opt
-        # link_widths_exp.loc[link_widths_exp.index.str.contains('H2')] = 0.0
+        link_widths_exp.loc[link_widths_exp.index.str.contains('H2')] = 0.0
         link_widths_cur = n.links.p_nom_min
+    elif attribute == "h2":
+        # bus_sizes = n.generators_t.p.sum().loc[n.generators.carrier == "load"].groupby(n.generators.bus).sum()       
+        bus_sizes = pd.concat(
+            (
+                n.generators.query('carrier != "load"')
+                .groupby(["bus", "carrier"])
+                .p_nom_opt.sum(),
+                n.storage_units.groupby(["bus", "carrier"]).p_nom_opt.sum(),
+            )
+        )
+        links_electrolysis = n.links.loc[n.links.carrier == "H2 electrolysis"].p_nom_opt
+        links_electrolysis.index = n.links.loc[n.links.carrier == "H2 electrolysis"].bus0
+        bus_sizes = links_electrolysis
+        bus_sizes.index = pd.MultiIndex.from_tuples(map(lambda x: (x, 'H2 electrolysis'), bus_sizes.index), names=["bus", "carrier"])
+        line_widths_exp = 0.0
+        line_widths_cur = 0.0
+        link_widths_exp = n.links.p_nom_opt
+        link_widths_exp.loc[~link_widths_exp.index.str.contains('H2')] = 0.0
+        link_widths_cur = 0.0
     else:
         raise "plotting of {} has not been implemented yet".format(attribute)
 
@@ -186,7 +208,7 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
         handles,
         labels,
         loc="upper left",
-        bbox_to_anchor=(0.24, 1.01),
+        bbox_to_anchor=(1, 0.5),
         frameon=False,
         labelspacing=0.8,
         handletextpad=1.5,
@@ -207,7 +229,7 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
         handles,
         labels,
         loc="upper left",
-        bbox_to_anchor=(0.26, 1.01),
+        bbox_to_anchor=(1, 0.5),
         frameon=False,
         labelspacing=0.8,
         handletextpad=0.5,
@@ -215,21 +237,18 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
     )
     ax.add_artist(l1_2)
 
-    handles = make_legend_circles_for(
-        [10e3, 5e3, 1e3], scale=bus_size_factor, facecolor="w"
-    )
-    labels = ["{} GW".format(s) for s in (10, 5, 3)]
-    l2 = ax.legend(
-        handles,
-        labels,
-        loc="upper left",
-        bbox_to_anchor=(0.01, 1.01),
-        frameon=False,
-        labelspacing=1.0,
-        title="Generation",
-        handler_map=make_handler_map_to_scale_circles_as_in(ax),
-    )
-    ax.add_artist(l2)
+    sizes = [10e3, 5e3, 3e3]
+    labels = ["{} GW".format(s/1e3) for s in sizes]
+    legend_kw = {
+        'loc': 'upper left',
+        'bbox_to_anchor': (1, 1),
+        'frameon': True,
+        'labelspacing': 1.0,
+        'title': 'Generation'
+    }
+
+    import pypsa
+    pypsa.plot.add_legend_circles(ax, [s/bus_size_factor for s in sizes], labels, patch_kw={'facecolor': 'w'}, legend_kw=legend_kw)
 
     techs = (bus_sizes.index.levels[1]).intersection(
         pd.Index(opts["vre_techs"] + opts["conv_techs"] + opts["storage_techs"])
@@ -384,7 +403,7 @@ if __name__ == "__main__":
     scenario_opts = wildcards.opts.split("-")
 
     fig, ax = plt.subplots(
-        figsize=map_figsize, subplot_kw={"projection": ccrs.PlateCarree()}
+        figsize=map_figsize, subplot_kw={"projection": ccrs.Mercator()}
     )
     plot_map(n, config["plotting"], ax=ax, attribute=wildcards.attr)
 
@@ -407,4 +426,4 @@ if __name__ == "__main__":
         )
     )
 
-    fig.savefig(snakemake.output.ext, transparent=True, bbox_inches="tight")
+    fig.savefig(snakemake.output.ext, transparent=False, bbox_inches="tight")

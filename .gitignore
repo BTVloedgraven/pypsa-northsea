@@ -34,3 +34,5 @@ doc/_build
 dconf
 
 /visuals
+
+gurobi.lic
