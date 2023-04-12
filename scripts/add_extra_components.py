@@ -141,17 +141,19 @@ def attach_stores(n, costs, elec_opts):
             marginal_cost=costs.at["electrolysis", "marginal_cost"],
         )
 
-        n.madd(
-            "Link",
-            h2_buses_off_i + " Electrolysis",
-            bus0=buses_off_i,
-            bus1=h2_buses_off_i,
-            carrier="H2 electrolysis",
-            p_nom_extendable=True,
-            efficiency=costs.at["electrolysis offshore", "efficiency"],
-            capital_cost=costs.at["electrolysis offshore", "capital_cost"],
-            marginal_cost=costs.at["electrolysis offshore", "marginal_cost"],
-        )
+        offshore_electrolysis = snakemake.config['offshore_options'].get('offshore-electrolysis', True)
+        if offshore_electrolysis:
+            n.madd(
+                "Link",
+                h2_buses_off_i + " Electrolysis",
+                bus0=buses_off_i,
+                bus1=h2_buses_off_i,
+                carrier="H2 electrolysis",
+                p_nom_extendable=True,
+                efficiency=costs.at["electrolysis offshore", "efficiency"],
+                capital_cost=costs.at["electrolysis offshore", "capital_cost"],
+                marginal_cost=costs.at["electrolysis offshore", "marginal_cost"],
+            )
 
         n.madd(
             "Link",
@@ -169,7 +171,7 @@ def attach_stores(n, costs, elec_opts):
 
     if "battery" in carriers:
         b_buses_i = n.madd(
-            "Bus", buses_i + " battery", carrier="battery", **bus_sub_dict
+            "Bus", buses_on_i + " battery", carrier="battery", **bus_sub_dict
         )
 
         n.madd(
@@ -247,23 +249,21 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         efficiency = 1,
         length=on_h2_links.length.values,
         capital_cost=costs.at["H2 pipeline", "capital_cost"] * on_h2_links.length,
-        # efficiency=costs.at["H2 pipeline", "efficiency"],
         carrier="H2 pipeline",
     )
-
-    n.madd(
-        "Link",
-        off_h2_links.index,
-        bus0=off_h2_links.bus0.values + " H2",
-        bus1=off_h2_links.bus1.values + " H2",
-        p_nom_extendable=True,
-        p_min_pu = -1,
-        efficiency = 1,
-        length=off_h2_links.length.values,
-        capital_cost=costs.at["H2 pipeline offshore", "capital_cost"] * off_h2_links.length,
-        # efficiency=costs.at["H2 pipeline offshore", "efficiency"],
-        carrier="H2 pipeline",
-    )
+    if snakemake.config['offshore_options'].get('offshore-h2-pipelines', True):
+        n.madd(
+            "Link",
+            off_h2_links.index,
+            bus0=off_h2_links.bus0.values + " H2",
+            bus1=off_h2_links.bus1.values + " H2",
+            p_nom_extendable=True,
+            p_min_pu = -1,
+            efficiency = 1,
+            length=off_h2_links.length.values,
+            capital_cost=costs.at["H2 pipeline offshore", "capital_cost"] * off_h2_links.length,
+            carrier="H2 pipeline",
+        )
 
 def add_AC_connections(
     n,
@@ -479,15 +479,17 @@ if __name__ == "__main__":
         snakemake.input.tech_costs, snakemake.config["costs"], elec_config, Nyears
     )
 
-    add_AC_connections(
-        n,
-        costs,
-    )
+    if snakemake.config['offshore_options'].get('ac-grid', True):    
+        add_AC_connections(
+            n,
+            costs,
+        )
 
-    add_DC_connections(
-        n,
-        costs,
-    )
+    if snakemake.config['offshore_options'].get('dc-grid', True): 
+        add_DC_connections(
+            n,
+            costs,
+        )
 
     attach_storageunits(n, costs, elec_config)
     attach_stores(n, costs, elec_config)

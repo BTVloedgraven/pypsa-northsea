@@ -34,6 +34,12 @@ focus_weights:
 mesh_offshore_region:
   threshold: 5000
 
+offshore_options:
+  ac-grid: true
+  dc-grid: true
+  offshore-electrolysis: false
+  offshore-h2-pipelines: false
+
 snapshots:
   start: "2015-01-01"
   end: "2016-01-01"
