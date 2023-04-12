@@ -727,21 +727,21 @@ rule test_plot:
     input:
         network="results/networks/"
         + RDIR
-        + "06_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "11_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         tech_costs=COSTS,
     output:
         only_map="results/plots/"
         + RDIR
-        + "06_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
+        + "11_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
         ext="results/plots/"
         + RDIR
-        + "06_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
+        + "11_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}",
     log:
         "logs/"
         + RDIR
-        + "plot_network/06_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
+        + "plot_network/11_04_2023_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log",
     script:
-        "scripts/plot_h2_network.py"
+        "scripts/plot_network.py"
 
 
 def input_make_summary(w):

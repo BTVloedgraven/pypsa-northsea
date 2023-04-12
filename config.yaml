@@ -77,8 +77,8 @@ electricity:
 
   extendable_carriers:
     Generator: [OCGT-nextgen, CCGT-nextgen, nuclear_nextgen, BECCS, DAC, solar, onwind, offwind-ac, offwind-dc, OCGT]
-    StorageUnit: [] # battery, H2
-    Store: [battery, H2]
+    StorageUnit: [battery] # battery, H2
+    Store: [H2]
     Link: [H2 pipeline] # H2 pipeline
 
   # use pandas query strings here, e.g. Country not in ['Germany']
@@ -322,7 +322,7 @@ solving:
 plotting:
   map:
     figsize: [7, 7]
-    boundaries: [-10, 18, 47, 63]
+    boundaries: [-8, 16, 47, 61.5]
     p_nom:
       bus_size_factor: 1.e+5
       linewidth_factor: 3.e+3

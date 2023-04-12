@@ -91,7 +91,7 @@ electrolysis offshore,2040,FOM,1.5,%/year,BEIS 21
 electrolysis offshore,2040,lifetime,20.0,years,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis offshore,2040,efficiency,0.75,per unit,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis offshore,2050,investment,500,EUR/kWel,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
-electrolysis offshore,2050,FOM,1.5,%/year,BEIS 21
+electrolysis offshore,2050,FOM,2.0,%/year,BEIS 21
 electrolysis offshore,2050,lifetime,20.0,years,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis offshore,2050,efficiency,0.8,per unit,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 fuel cell,2040,investment,728.0,EUR/kWel,IEA perspectives and prjected costs

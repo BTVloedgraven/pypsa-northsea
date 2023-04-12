@@ -208,11 +208,11 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
         handles,
         labels,
         loc="upper left",
-        bbox_to_anchor=(1, 0.5),
+        bbox_to_anchor=(0.98, 0.5),
         frameon=False,
         labelspacing=0.8,
         handletextpad=1.5,
-        title="Transmission Exp./Exist.             ",
+        title="Transmission Exist./Exp.             ",
     )
     ax.add_artist(l1_1)
 

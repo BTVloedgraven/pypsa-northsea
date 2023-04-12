@@ -1036,6 +1036,11 @@ if __name__ == "__main__":
         snakemake.config["lines"]["length_factor"],
     )
 
+    if 'hydro' in snakemake.config['renewable']:
+        carriers = snakemake.config['renewable']['hydro'].pop('carriers', [])
+        attach_hydro(n, costs, ppl, snakemake.input.profile_hydro, snakemake.input.hydro_capacities,
+                     carriers, **snakemake.config['renewable']['hydro'])
+
     move_generators(
         n,
         costs,
