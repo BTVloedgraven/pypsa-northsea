@@ -112,6 +112,10 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
 
     if attribute == "p_nom":
         # bus_sizes = n.generators_t.p.sum().loc[n.generators.carrier == "load"].groupby(n.generators.bus).sum()
+        
+        n.generators.loc[n.generators['carrier'] == "offwind-ac", 'carrier'] = 'offwind'
+        n.generators.loc[n.generators['carrier'] == "offwind-dc", 'carrier'] = 'offwind'
+        # print(n.generators.query('(carrier == "offwind-ac") or (carrier == "offwind-dc")').carrier)
         bus_sizes = pd.concat(
             (
                 n.generators.query('carrier != "load"')
@@ -123,6 +127,8 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
                 .p_nom_opt.sum(),
             )
         )
+        # print(n.generators.query('(carrier == "offwind-ac") or (carrier == "offwind-dc")').carrier)
+        # print(n.generators.query('(carrier == "offwind-ac") or (carrier == "offwind-dc")').groupby(["bus"]).p_nom_opt.sum())
         line_widths_exp = n.lines.s_nom_opt
         line_widths_cur = n.lines.s_nom_min
         link_widths_exp = n.links.p_nom_opt

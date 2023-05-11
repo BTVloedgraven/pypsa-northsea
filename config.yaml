@@ -17,7 +17,7 @@ run:
 scenario:
   simpl: ['']
   ll: [v1.75]
-  clusters: [117]
+  clusters: [27]
   offgrid: ['all']
   opts: [Co2L-24H-CCL-onwind+p0.3]
   offshore_region: 'north_sea'
@@ -32,13 +32,15 @@ focus_weights:
   'GB' : 0.20
 
 mesh_offshore_region:
-  threshold: 5000
+  threshold: 5000000
 
 offshore_options:
   ac-grid: true
   dc-grid: true
-  offshore-electrolysis: false
-  offshore-h2-pipelines: false
+  dc-hub-connections: true
+  offshore-electrolysis: true
+  offshore-h2-pipelines: true
+  onshore-connection-buses: ["NL1 0", "NL1 1", "NL1 3", "NL1 4", "DE1 4", "DK1 0", "NO2 0", "GB0 0", "GB0 1", "BE1 1"]
 
 snapshots:
   start: "2015-01-01"
@@ -82,7 +84,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [OCGT-nextgen, CCGT-nextgen, nuclear_nextgen, BECCS, DAC, solar, onwind, offwind-ac, offwind-dc, OCGT]
+    Generator: [OCGT-nextgen, CCGT-nextgen, nuclear_nextgen, BECCS, DAC, solar, onwind, offwind-ac, offwind-dc, OCGT, CCGT]
     StorageUnit: [battery] # battery, H2
     Store: [H2]
     Link: [H2 pipeline] # H2 pipeline
@@ -316,7 +318,7 @@ solving:
     AggFill: 0
     PreDual: 0
     GURO_PAR_BARDENSETHRESH: 200
-    NodeMethod: 2
+    # NodeMethod: 2
   # solver:
   #   name: cplex
   #   threads: 4
@@ -334,7 +336,7 @@ plotting:
       linewidth_factor: 3.e+3
     h2:
       bus_size_factor: 5.e+4
-      linewidth_factor: 3.e+3
+      linewidth_factor: 1.5e+3
 
   costs_max: 200
   costs_threshold: 1
@@ -343,7 +345,7 @@ plotting:
   energy_min: -10000.
   energy_threshold: 50.
 
-  vre_techs: ["onwind", "offwind-ac", "offwind-dc", "solar", "ror", "H2 electrolysis"]
+  vre_techs: ["onwind", "offwind", "solar", "ror", "H2 electrolysis"]
   conv_techs: ["OCGT", "CCGT", "nuclear", "Coal"]
   storage_techs: ["hydro+PHS", "battery", "H2"]
   load_carriers: ["AC load"]
@@ -352,7 +354,7 @@ plotting:
   tech_colors:
     "onwind": "#235ebc"
     "onshore wind": "#235ebc"
-    'offwind': "#6895dd"
+    'offwind': "#74c6f2"
     'offwind-ac': "#6895dd"
     'offshore wind': "#6895dd"
     'offshore wind ac': "#6895dd"
@@ -399,6 +401,7 @@ plotting:
   nice_names:
     OCGT: "Open-Cycle Gas"
     CCGT: "Combined-Cycle Gas"
+    offwind: "Offshore Wind"
     offwind-ac: "Offshore Wind (AC)"
     offwind-dc: "Offshore Wind (DC)"
     onwind: "Onshore Wind"

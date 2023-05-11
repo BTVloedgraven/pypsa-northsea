@@ -79,6 +79,7 @@ def attach_storageunits(n, costs, elec_opts):
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     buses_i = n.buses.index
+    buses_i = buses_i[~buses_i.str.contains('off')]
 
     lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
     lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
@@ -325,6 +326,75 @@ def add_AC_connections(
     )
     n.lines.loc[lines_df.index, "capital_cost"] = cable_cost
 
+def add_DC_hub_connections(
+    n,
+    costs,
+):
+    coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
+
+    # works better than with closest neighbors. maybe only create graph like this for offshore buses:
+    cells, generators = libpysal.cg.voronoi_frames(
+        coords.values, clip="convex hull"
+    )
+    delaunay = libpysal.weights.Rook.from_dataframe(cells)
+    offshore_link_graph = delaunay.to_networkx()
+    offshore_link_graph = nx.relabel_nodes(
+        offshore_link_graph, dict(zip(offshore_link_graph, coords.index))
+    )
+
+    links_df = nx.to_pandas_edgelist(offshore_link_graph)
+
+    links_df = links_df.rename(
+        columns={"source": "bus0", "target": "bus1", "weight": "length"}
+    ).astype({"bus0": "string", "bus1": "string", "length": "float"})
+    links_df.drop(links_df.loc[~links_df.bus0.str.contains('off') & ~links_df.bus1.str.contains('off')].index, inplace=True)
+    coords["xy"] = list(map(tuple, (coords[["x", "y"]]).values))
+
+    links_df.loc[:, "length"] = links_df.apply(
+        lambda x: geodesic(coords.loc[x.bus0, "xy"], coords.loc[x.bus1, "xy"]).km,
+        axis=1,
+    )
+    links_df.drop(links_df.query("length==0").index, inplace=True)
+    links_df.index = "off_DC_hub_" + links_df.index.astype("str")
+
+    n.madd(
+        "Link",
+        names=links_df.index,
+        carrier="DC",
+        p_min_pu = -1,
+        efficiency = 1,
+        bus0=links_df["bus0"].values,
+        bus1=links_df["bus1"].values,
+        length=links_df["length"].values,
+    )
+    # attach cable cost DC for offshore grid lines
+    line_length_factor = snakemake.config["lines"]["length_factor"]
+    cable_cost = n.links.loc[links_df.index, "length"].apply(
+        lambda x: x
+        * line_length_factor
+        * costs.at["offwind-dc-connection-submarine", "capital_cost"]
+    )
+
+    cost_per_m_depth = snakemake.config['costs']['dc_station_depth_cost']
+    reference_depth = snakemake.config['costs']['dc_station_reference_depth']
+    capex_depth = cost_per_m_depth*(-n.buses["water_depth"]-reference_depth) # in €/MW
+
+    capital_costs_depth = (
+        capex_depth
+        * (
+            calculate_annuity(
+                costs.at['offwind-dc-station', "lifetime"],
+                costs.at['offwind-dc-station', "discount rate"],
+            )
+            + costs.at['offwind-dc-station', "FOM"] / 100.0
+        )
+        * Nyears
+    )
+    capital_costs_depth_link = n.links.loc[links_df.index, "bus0"].apply(
+        lambda x: capital_costs_depth.loc[x]
+    )
+    n.links.loc[links_df.index, "capital_cost"] = cable_cost + capital_costs_depth_link + costs.at["offwind-dc-station", "capital_cost"]
+
 def calculate_annuity(n, r):
     """
     Calculate the annuity factor for an asset with lifetime n years and.
@@ -487,6 +557,12 @@ if __name__ == "__main__":
 
     if snakemake.config['offshore_options'].get('dc-grid', True): 
         add_DC_connections(
+            n,
+            costs,
+        )
+
+    if snakemake.config['offshore_options'].get('dc-hub-connections', True): 
+        add_DC_hub_connections(
             n,
             costs,
         )
