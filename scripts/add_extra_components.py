@@ -270,7 +270,7 @@ def add_AC_connections(
     costs,
 ):
     # Create line for every offshore bus and connect it to onshore buses
-    onshore_buses = ["NL1 0", "NL1 1", "NL1 3", "NL1 4", "DE1 4", "DK1 0", "NO2 0", "GB0 0", "GB0 1", "BE1 1"]
+    onshore_buses = snakemake.config['offshore_options']['onshore-connection-buses']
     onshore_coords = n.buses.loc[n.buses.index.isin(onshore_buses), ["x", "y"]]
     # onshore_coords = n.buses.loc[~n.buses.index.str.contains("off"), ["x", "y"]]
     offshore_coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
@@ -346,7 +346,7 @@ def add_DC_connections(
     costs,
 ):
     # Create line for every offshore bus and connect it to onshore buses
-    onshore_buses = ["NL1 0", "NL1 1", "NL1 3", "NL1 4", "DE1 4", "DK1 0", "NO2 0", "GB0 0", "GB0 1", "BE1 1"]
+    onshore_buses = snakemake.config['offshore_options']['onshore-connection-buses']
     onshore_coords = n.buses.loc[n.buses.index.isin(onshore_buses), ["x", "y"]]
     offshore_coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
 

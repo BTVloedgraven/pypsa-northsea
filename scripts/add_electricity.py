@@ -966,12 +966,14 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.base_network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
-
+    legacy_gt_to_hydrogen = snakemake.config["enable"].get("legacy_gt_to_hydrogen", False)
+    
     costs = load_costs(
         snakemake.input.tech_costs,
         snakemake.config["costs"],
         snakemake.config["electricity"],
         Nyears,
+        legacy_gt_to_hydrogen
     )
     ppl = load_powerplants(snakemake.input.powerplants)
 
