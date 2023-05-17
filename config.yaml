@@ -17,7 +17,7 @@ run:
 scenario:
   simpl: ['']
   ll: [v1.75]
-  clusters: [27]
+  clusters: [117]
   offgrid: ['all']
   opts: [Co2L-24H-CCL-onwind+p0.3]
   offshore_region: 'north_sea'
@@ -32,9 +32,10 @@ focus_weights:
   'GB' : 0.20
 
 mesh_offshore_region:
-  threshold: 5000000
+  threshold: 5000
 
 offshore_options:
+  only-radial: false
   ac-grid: true
   dc-grid: true
   dc-hub-connections: true
@@ -57,10 +58,10 @@ enable:
   retrieve_natura_raster: true
   build_custom_busmap: true
   custom_busmap: true
-  legacy_gt_to_hydrogen: ['CCGT', 'OCGT', 'CCGT-nextgen', 'OCGT-nextgen'] #! custom WB
+  legacy_gt_to_hydrogen: ['CCGT', 'OCGT'] #! custom WB
   # will connect all listed carriers to the hydrogen buses and infer zero fuel cost and emmisions for these technologies
   extendable_carriers_to_all_nodes: true #! custom WB
-  extendable_generators: [OCGT-nextgen, CCGT-nextgen, nuclear_nextgen, BECCS, DAC]
+  extendable_generators: [OCGT, CCGT, nuclear, BECCS, DAC]
   # used to allow all next-gen technologies to be placed at every node
   hydrogen_contant_loads_at_nodes: 'data/hydrogen_demand_per_bus.csv' #! custom WB
   # used to apply a custom hydrogen load at every node based on synthesis data from Agora and IRENA
@@ -84,15 +85,18 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [OCGT-nextgen, CCGT-nextgen, nuclear_nextgen, BECCS, DAC, solar, onwind, offwind-ac, offwind-dc, OCGT, CCGT]
+    Generator: [nuclear, BECCS, DAC, solar, onwind, offwind-ac, offwind-dc, OCGT, CCGT]
     StorageUnit: [battery] # battery, H2
     Store: [H2]
     Link: [H2 pipeline] # H2 pipeline
 
   # use pandas query strings here, e.g. Country not in ['Germany']
-  powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
+  # powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
   # use pandas query strings here, e.g. Country in ['Germany']
-  custom_powerplants: true
+  # custom_powerplants: true
+
+  powerplants_filter: "Country not in ['BE', 'FR', 'DE', 'GB', 'NL'] and (Fueltype == 'Hydro' and Name != 'Psw Vianden') and (DateOut > 2050)"
+  custom_powerplants: YearDecommissioning > 2050
 
   conventional_carriers: [nuclear, OCGT, CCGT, biomass, waste]
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]

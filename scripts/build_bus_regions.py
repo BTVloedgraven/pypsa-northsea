@@ -169,12 +169,13 @@ if __name__ == "__main__":
             n.madd(
                 "Bus",
                 names=[offshore_shape.name],
-                v_nom=220,
+                v_nom=66,
                 x=offshore_shape.x,
                 y=offshore_shape.y,
                 substation_lv=False,
                 substation_off=True,
                 country=offshore_shape.country,
+                carrier="AC"
             )
             if offshore_locs.empty:
                 offshore_regions_c = gpd.GeoDataFrame(

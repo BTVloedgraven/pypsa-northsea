@@ -224,7 +224,7 @@ def plot_map(n, opts, ax=None, attribute="p_nom"):
 
     handles = []
     labels = []
-    for s in (10, 5):
+    for s in (10, 1):
         handles.append(
             plt.Line2D(
                 [0], [0], color=line_colors["cur"], linewidth=s * 1e3 / linewidth_factor

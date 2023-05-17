@@ -510,8 +510,9 @@ def move_generators(
         .index.to_series()
         .str.replace(" offwind-\w+", "", regex=True)
     ).rename('name')
-    
-    move_generators = pd.merge(move_generators.astype(int), cluster_map, left_on='name', right_index=True)
+
+    cluster_map.index = cluster_map.index.astype(str)
+    move_generators = pd.merge(move_generators, cluster_map, left_on='name', right_index=True)
 
     move_generators = move_generators[move_generators.isin(n.buses.index)]
     n.generators.loc[move_generators.index, "bus"] = move_generators.busmap
