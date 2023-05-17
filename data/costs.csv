@@ -183,13 +183,13 @@ nuclear_nextgen,2050,VOM,4.0,EUR/MWhel,eRisk overleg target marginale kosten = 1
 nuclear_nextgen,2050,fuel,2.62,EUR/MWhth,eRisk overleg target marginale kosten = 12 / MWh
 nuclear_nextgen,2050,efficiency,0.33,per unit,IEA2020-3
 nuclear,2040,lifetime,60.0,years,IEA2020-2
-nuclear,2040,investment,4000.0,EUR/kWel,"Locked, only used for determining the FOM"
+nuclear,2040,investment,9000.0,EUR/kWel,"Locked, only used for determining the FOM"
 nuclear,2040,FOM,2.25,%/year,eRisk overleg target inclusief decommisioning = 100
 nuclear,2040,VOM,4.0,EUR/MWhel,eRisk overleg target marginale kosten = 12 / MWh
 nuclear,2040,fuel,2.62,EUR/MWhth,eRisk overleg target marginale kosten = 12 / MWh
 nuclear,2040,efficiency,0.33,per unit,IEA2020-3
 nuclear,2050,lifetime,60.0,years,IEA2020-2
-nuclear,2050,investment,4000.0,EUR/kWel,"Locked, only used for determining the FOM"
+nuclear,2050,investment,9000.0,EUR/kWel,"Locked, only used for determining the FOM"
 nuclear,2050,FOM,2.25,%/year,eRisk overleg target inclusief decommisioning = 100
 nuclear,2050,VOM,4.0,EUR/MWhel,eRisk overleg target marginale kosten = 12 / MWh
 nuclear,2050,fuel,2.62,EUR/MWhth,eRisk overleg target marginale kosten = 12 / MWh

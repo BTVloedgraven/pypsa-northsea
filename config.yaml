@@ -17,9 +17,9 @@ run:
 scenario:
   simpl: ['']
   ll: [v1.75]
-  clusters: [117]
+  clusters: [27]
   offgrid: ['all']
-  opts: [Co2L-24H-CCL-onwind+p0.3]
+  opts: [Co2L-3H-CCL-onwind+p0.3]
   offshore_region: 'north_sea'
 
 countries: ['NL','DE','BE','DK','NO','GB']
@@ -32,13 +32,13 @@ focus_weights:
   'GB' : 0.20
 
 mesh_offshore_region:
-  threshold: 5000
+  threshold: 5000000
 
 offshore_options:
   only-radial: false
   ac-grid: true
   dc-grid: true
-  dc-hub-connections: true
+  all-dc-radial: true
   offshore-electrolysis: true
   offshore-h2-pipelines: true
   onshore-connection-buses: ["NL1 0", "NL1 1", "NL1 3", "NL1 4", "DE1 4", "DK1 0", "NO2 0", "GB0 0", "GB0 1", "BE1 1"]
