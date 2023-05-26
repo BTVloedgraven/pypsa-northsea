@@ -277,7 +277,7 @@ def attach_stores(n, costs, elec_opts):
         )
 
 
-def attach_hydrogen_pipelines(n, costs, elec_opts, offshore_grid):
+def attach_hydrogen_pipelines(n, costs, elec_opts, offshore_grid, offshore_grid):
     ext_carriers = elec_opts["extendable_carriers"]
     as_stores = ext_carriers.get("Store", [])
 
@@ -404,13 +404,17 @@ def add_DC_connections(
     offshore_grid,
     all_radial_connections,
 ):
-    links_df = offshore_grid.copy().reset_index(drop=True)
-    all_radial_connections = all_radial_connections.copy()
-    if snakemake.config['offshore_options'].get('radial', "direct") == "all": 
-        links_df = pd.concat([links_df, all_radial_connections]).reset_index(drop=True)
-    
-    links_df['bus0'] = links_df['bus0'].apply(lambda x: x + " DC" if "off" in x else x)
-    links_df['bus1'] = links_df['bus1'].apply(lambda x: x + " DC" if "off" in x else x)
+    coords = n.buses.loc[n.buses.index.str.contains("off" and "DC"), ["x", "y"]]
+
+    # works better than with closest neighbors. maybe only create graph like this for offshore buses:
+    cells, generators = libpysal.cg.voronoi_frames(
+        coords.values, clip="convex hull"
+    )
+    delaunay = libpysal.weights.Rook.from_dataframe(cells)
+    offshore_link_graph = delaunay.to_networkx()
+    offshore_link_graph = nx.relabel_nodes(
+        offshore_link_graph, dict(zip(offshore_link_graph, coords.index))
+    )
 
     links_df = links_df[
         ~pd.DataFrame(np.sort(links_df[["bus0", "bus1"]])).duplicated()

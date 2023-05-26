@@ -31,7 +31,7 @@ focus_weights:
   'GB' : 0.20
 
 mesh_offshore_region:
-  threshold: EEZ
+  threshold: 5000
 
 offshore_options:
   radial: all
