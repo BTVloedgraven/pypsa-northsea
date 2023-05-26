@@ -163,7 +163,7 @@ def get_efficiencies(n, h2_gens_2_links):
     return efficencies
 
 def add_CCL_constraints(n, config):
-    agg_p_nom_limits = config["electricity"].get("agg_p_nom_limits")
+    agg_p_nom_limits = snakemake.input[1]
 
     try:
         agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=0)
@@ -528,7 +528,7 @@ if __name__ == "__main__":
     tmpdir = snakemake.config["solving"].get("tmpdir")
     if tmpdir is not None:
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
-    opts = snakemake.wildcards.opts.split("-")
+    opts = snakemake.config["scenario"].get("opts")[0].split("-")
     solve_opts = snakemake.config["solving"]["options"]
 
     fn = getattr(snakemake.log, "memory", None)

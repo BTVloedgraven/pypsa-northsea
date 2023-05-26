@@ -221,9 +221,9 @@ offwind-dc-station,2040,investment,400.0,EUR/kWel,Haertel 2017; assuming one ons
 offwind-ac-connection-submarine,2050,investment,2685.0,EUR/MW/km,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
 offwind-ac-connection-underground,2050,investment,1342.0,EUR/MW/km,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
 offwind-ac-station,2050,investment,250.0,EUR/kWel,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
-offwind-dc-connection-submarine,2050,investment,1430.0,EUR/MW/km,Table 1: https://www.researchgate.net/publication/291554198_Optioneering_analysis_for_connecting_Dogger_Bank_offshore_wind_farms_to_the_GB_electricity_network
-offwind-dc-connection-underground,2050,investment,1100.0,EUR/MW/km,Haertel 2017; average + 13% learning reduction
-offwind-dc-station,2050,investment,440.0,EUR/kWel,Haertel 2017; assuming one onshore and one offshore node + 13% learning reduction
+offwind-dc-connection-submarine,2050,investment,1300.0,EUR/MW/km,Table 1: https://www.researchgate.net/publication/291554198_Optioneering_analysis_for_connecting_Dogger_Bank_offshore_wind_farms_to_the_GB_electricity_network
+offwind-dc-connection-underground,2050,investment,1000.0,EUR/MW/km,Haertel 2017; average + 13% learning reduction
+offwind-dc-station,2050,investment,400.0,EUR/kWel,Haertel 2017; assuming one onshore and one offshore node + 13% learning reduction
 oil,2030,lifetime,30.0,years,ECF2010 in DIW DataDoc http://hdl.handle.net/10419/80348
 oil,2030,investment,400.0,EUR/kWel,DIW DataDoc http://hdl.handle.net/10419/80348
 oil,2030,FOM,1.5,%/year,DIW DataDoc http://hdl.handle.net/10419/80348

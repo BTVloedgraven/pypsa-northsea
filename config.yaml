@@ -17,9 +17,8 @@ run:
 scenario:
   simpl: ['']
   ll: [v1.75]
-  clusters: [117]
-  offgrid: ['all']
-  opts: [Co2L-24H-CCL-onwind+p0.3]
+  clusters: [100]
+  opts: [Co2L0.0-24H-CCL-onwind+p0.3]
   offshore_region: 'north_sea'
 
 countries: ['NL','DE','BE','DK','NO','GB']
@@ -32,15 +31,14 @@ focus_weights:
   'GB' : 0.20
 
 mesh_offshore_region:
-  threshold: 5000
+  threshold: EEZ
 
 offshore_options:
-  only-radial: false
-  ac-grid: true
-  dc-grid: true
-  dc-hub-connections: true
-  offshore-electrolysis: true
-  offshore-h2-pipelines: true
+  radial: all
+  ac-grid: 1
+  dc-grid: 1
+  offshore-electrolysis: 1
+  offshore-h2-pipelines: 1
   onshore-connection-buses: ["NL1 0", "NL1 1", "NL1 3", "NL1 4", "DE1 4", "DK1 0", "NO2 0", "GB0 0", "GB0 1", "BE1 1"]
 
 snapshots:
@@ -262,7 +260,7 @@ load:
   scaling_factor: 1.4
 
 costs:
-  year: 2040
+  year: 2050
   discountrate: 0.0225 # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   USD2013_to_EUR2013: 0.7532 # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
   emission_prices: # in currency per tonne emission, only used with the option Ep

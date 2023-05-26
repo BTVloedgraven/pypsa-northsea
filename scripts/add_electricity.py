@@ -948,9 +948,7 @@ def insert_custom_national_loads(load, cldf: pd.DataFrame, scaling=1.):
     cldf /= scaling # Scaling is applied in attach_loads again. We don't want to scale the custom loads.
 
     for col in cldf.columns:
-        if not (col in orr_load.columns):
-            raise ValueError(f"Custom national load does not exist in network: {col}.")
-        else:
+        if (col in orr_load.columns):
             logging.info(f"Adding custom national load for: {col}")
             orr_load.loc[:, col] = cldf[col].values
 

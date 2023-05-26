@@ -277,7 +277,7 @@ def attach_stores(n, costs, elec_opts):
         )
 
 
-def attach_hydrogen_pipelines(n, costs, elec_opts):
+def attach_hydrogen_pipelines(n, costs, elec_opts, offshore_grid):
     ext_carriers = elec_opts["extendable_carriers"]
     as_stores = ext_carriers.get("Store", [])
 
@@ -293,17 +293,15 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
     # determine bus pairs
     attrs = ["bus0", "bus1", "length"]
     candidates = pd.concat(
-        [n.lines[attrs], n.links.loc[n.links.length != 0][attrs]]
+        [n.lines.loc[~n.lines.bus0.str.contains("off") & ~n.lines.bus1.str.contains("off")][attrs], 
+         n.links.loc[~n.links.bus0.str.contains("off") & ~n.links.bus1.str.contains("off") & n.links.length != 0][attrs],
+         offshore_grid]
     ).reset_index(drop=True)
 
     # remove bus pair duplicates regardless of order of bus0 and bus1
     h2_links = candidates[
         ~pd.DataFrame(np.sort(candidates[["bus0", "bus1"]])).duplicated()
     ]
-    h2_links['bus0'] = h2_links['bus0'].str.replace(" AC","")
-    h2_links['bus1'] = h2_links['bus1'].str.replace(" AC","")
-    h2_links['bus0'] = h2_links['bus0'].str.replace(" DC","")
-    h2_links['bus1'] = h2_links['bus1'].str.replace(" DC","")
 
     h2_links.index = h2_links.apply(lambda c: f"H2 pipeline {c.bus0}-{c.bus1}", axis=1)
     off_h2_links = h2_links.loc[h2_links.index.str.contains('off')]
@@ -322,7 +320,7 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         capital_cost=costs.at["H2 pipeline", "capital_cost"] * on_h2_links.length,
         carrier="H2 pipeline",
     )
-    if snakemake.config['offshore_options'].get('offshore-h2-pipelines', True) and not snakemake.config['offshore_options'].get('only-radial', True):
+    if snakemake.config['offshore_options'].get('offshore-h2-pipelines', True):
         n.madd(
             "Link",
             off_h2_links.index,
@@ -336,21 +334,14 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
             carrier="H2 pipeline",
         )
 
-def add_AC_connections(
-    n,
-    costs,
-):
+def offshore_grid(n):
     # Create line for every offshore bus and connect it to onshore buses
     onshore_buses = snakemake.config['offshore_options']['onshore-connection-buses']
     onshore_coords = n.buses.loc[n.buses.index.isin(onshore_buses), ["x", "y"]]
     # onshore_coords = n.buses.loc[~n.buses.index.str.contains("off"), ["x", "y"]]
-    offshore_coords = n.buses.loc[n.buses.index.str.contains("off" and "AC"), ["x", "y"]]
+    offshore_coords = n.buses.loc[n.buses.index.str.contains("off") & ~n.buses.index.str.contains("AC|DC|H2"), ["x", "y"]]
 
     coords = pd.concat([onshore_coords, offshore_coords])
-
-    tree = BallTree(
-        np.radians(coords), leaf_size=40, metric="haversine"
-    )
 
     # works better than with closest neighbors. maybe only create graph like this for offshore buses:
     cells, generators = libpysal.cg.voronoi_frames(
@@ -375,7 +366,18 @@ def add_AC_connections(
         axis=1,
     )
     lines_df.drop(lines_df.query("length==0").index, inplace=True)
+
+    return lines_df
+
+def add_AC_connections(
+    n,
+    costs,
+    offshore_grid,
+):
+    lines_df = offshore_grid.copy()
     lines_df.index = "off_AC_" + lines_df.index.astype("str")
+    lines_df['bus0'] = lines_df['bus0'].apply(lambda x: x + " AC" if "off" in x else x)
+    lines_df['bus1'] = lines_df['bus1'].apply(lambda x: x + " AC" if "off" in x else x)
 
     n.madd(
         "Line",
@@ -396,35 +398,24 @@ def add_AC_connections(
     station_cost = n.lines.loc[lines_df.index].apply(lambda x: 0 if (('off' in x.bus0) and ('off' in x.bus1)) else 0.25*costs.at["offwind-ac-station", "capital_cost"], axis=1)
     n.lines.loc[lines_df.index, "capital_cost"] = cable_cost + station_cost
 
-def add_DC_hub_connections(
+def add_DC_connections(
     n,
     costs,
+    offshore_grid,
+    all_radial_connections,
 ):
-    coords = n.buses.loc[n.buses.index.str.contains("off" and "DC"), ["x", "y"]]
+    links_df = offshore_grid.copy().reset_index(drop=True)
+    all_radial_connections = all_radial_connections.copy()
+    if snakemake.config['offshore_options'].get('radial', "direct") == "all": 
+        links_df = pd.concat([links_df, all_radial_connections]).reset_index(drop=True)
+    
+    links_df['bus0'] = links_df['bus0'].apply(lambda x: x + " DC" if "off" in x else x)
+    links_df['bus1'] = links_df['bus1'].apply(lambda x: x + " DC" if "off" in x else x)
 
-    # works better than with closest neighbors. maybe only create graph like this for offshore buses:
-    cells, generators = libpysal.cg.voronoi_frames(
-        coords.values, clip="convex hull"
-    )
-    delaunay = libpysal.weights.Rook.from_dataframe(cells)
-    offshore_link_graph = delaunay.to_networkx()
-    offshore_link_graph = nx.relabel_nodes(
-        offshore_link_graph, dict(zip(offshore_link_graph, coords.index))
-    )
+    links_df = links_df[
+        ~pd.DataFrame(np.sort(links_df[["bus0", "bus1"]])).duplicated()
+    ]
 
-    links_df = nx.to_pandas_edgelist(offshore_link_graph)
-
-    links_df = links_df.rename(
-        columns={"source": "bus0", "target": "bus1", "weight": "length"}
-    ).astype({"bus0": "string", "bus1": "string", "length": "float"})
-    links_df.drop(links_df.loc[~links_df.bus0.str.contains('off') & ~links_df.bus1.str.contains('off')].index, inplace=True)
-    coords["latlon"] = list(map(tuple, (coords[["y", "x"]]).values))
-
-    links_df.loc[:, "length"] = links_df.apply(
-        lambda x: geodesic(coords.loc[x.bus0, "latlon"], coords.loc[x.bus1, "latlon"]).km,
-        axis=1,
-    )
-    links_df.drop(links_df.query("length==0").index, inplace=True)
     links_df.index = "off_DC_hub_" + links_df.index.astype("str")
 
     n.madd(
@@ -448,6 +439,27 @@ def add_DC_hub_connections(
     station_cost = n.links.loc[links_df.index].apply(lambda x: 0 if (('off' in x.bus0) and ('off' in x.bus1)) else 0.25*costs.at["offwind-dc-station", "capital_cost"], axis=1)
     n.links.loc[links_df.index, "capital_cost"] = cable_cost + station_cost
 
+def all_radial_connections(
+    n,    
+):
+    # Create line for every offshore bus and connect it to onshore buses
+    onshore_buses = snakemake.config['offshore_options']['onshore-connection-buses']
+    onshore_coords = n.buses.loc[n.buses.index.isin(onshore_buses), ["x", "y"]]
+    offshore_coords = n.buses.loc[n.buses.index.str.contains("off") & ~n.buses.index.str.contains("AC|DC|H2"), ["x", "y"]]
+
+    coords = pd.concat([onshore_coords, offshore_coords])
+    coords["latlon"] = list(map(tuple, (coords[["y", "x"]]).values))
+
+    links_df = pd.merge(pd.DataFrame({'bus0': offshore_coords.index}), pd.DataFrame({'bus1': onshore_buses}), how='cross')
+
+    links_df.loc[:, "length"] = links_df.apply(
+        lambda x: geodesic(coords.loc[x.bus0, "latlon"], coords.loc[x.bus1, "latlon"]).km,
+        axis=1,
+    )
+    links_df.drop(links_df.query("length==0").index, inplace=True)
+
+    return links_df
+
 def calculate_annuity(n, r):
     """
     Calculate the annuity factor for an asset with lifetime n years and.
@@ -464,7 +476,7 @@ def calculate_annuity(n, r):
     else:
         return 1 / n
 
-def add_DC_connections(
+def old_add_DC_connections(
     n,
     costs,
 ):
@@ -652,10 +664,7 @@ def attach_hydrogen_loads(n, enable_config):
         bus_string = ""
         for col in h2df.index:
             bus = col + " H2"
-            if not (bus in n.stores.index):
-                raise ValueError(f"Hydrogen bus does not exist in network: {bus}.")
-
-            else:
+            if (bus in n.stores.index):
                 value = h2df.at[col, h2df.columns[0]]
                 bus_string += f"\t{bus}, {int(value)} MW\n"
 
@@ -693,7 +702,10 @@ if __name__ == "__main__":
     attach_GT_to_hydrogen(n, legacy_gt_to_hydrogen)
     attach_hydrogen_loads(n, snakemake.config['enable'])
 
-    if snakemake.config['offshore_options'].get('only-radial', True):    
+    offshore_grid = offshore_grid(n)
+    all_radial_connections = all_radial_connections(n)
+
+    if snakemake.config['offshore_options'].get("radial", "direct") == "direct":    
         add_radial_connections(
             n,
             costs,
@@ -703,21 +715,18 @@ if __name__ == "__main__":
             add_AC_connections(
                 n,
                 costs,
+                offshore_grid,
             )
 
         if snakemake.config['offshore_options'].get('dc-grid', True): 
             add_DC_connections(
                 n,
                 costs,
+                offshore_grid,
+                all_radial_connections,
             )
 
-        if snakemake.config['offshore_options'].get('dc-hub-connections', True): 
-            add_DC_hub_connections(
-                n,
-                costs,
-            )
-
-    attach_hydrogen_pipelines(n, costs, elec_config)
+    attach_hydrogen_pipelines(n, costs, elec_config, offshore_grid)
 
     add_nice_carrier_names(n, snakemake.config)
 

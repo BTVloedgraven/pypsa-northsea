@@ -36,6 +36,10 @@ rule cluster_all_networks:
     input:
         expand("networks/" + RDIR + "elec_s{simpl}_{clusters}.nc", **config["scenario"]),
 
+rule prepare_network_for_cluster:
+    script:
+        "scripts/prepare_network_for_cluster.py"
+
 
 rule extra_components_all_networks:
     input:
@@ -53,6 +57,18 @@ rule prepare_all_networks:
             + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
+
+rule prepare_scenario:
+    input:
+        config="scenarios/" + RDIR + "{year}_{lower}_{upper}_{radial}_{AC}_{DC}_{H2pipes}_{H2prod}_{costs}_{meshsize}_{lin}" + RDIR + "config.yaml",
+        costs="staged_data/" + RDIR + "costs_{costs}.csv",
+        custom_bus_loads="staged_data/" + RDIR + "custom_bus_loads_{year}.csv",
+        custom_national_loads="staged_data/" + RDIR + "custom_national_loads_{year}.csv",
+        custom_powerplants="staged_data/" + RDIR + "custom_powerplants_{year}.csv",
+        hydrogen_demand="staged_data/" + RDIR + "hydrogen_demand_per_node_{year}.csv",
+        meshed_offshore_shapes="staged_data/" + RDIR + "offshore_shapes_meshed_{meshsize}.geojson",
+    script:
+        "scripts/" + RDIR + "prepare_scenario.py"
 
 
 rule solve_all_networks:
@@ -660,6 +676,46 @@ rule solve_network:
     threads: 4
     resources:
         mem_mb=memory,
+    shadow:
+        "minimal"
+    script:
+        "scripts/solve_network.py"
+
+rule solve_scenario:
+    input:
+        "scenarios/" 
+        + RDIR + "prepared_scenarios/"
+        + RDIR + "scenario_{id}/"
+        + RDIR + "prepared_scenario_{id}.nc",
+        "scenarios/"
+        + RDIR + "prepared_scenarios/"
+        + RDIR + "scenario_{id}/"
+        + RDIR + "agg_p_nom_minmax.csv",
+        tech_costs=COSTS,
+    output:
+        "scenarios/"
+        + RDIR + "solved_scenarios/"
+        + RDIR + "scenario_{id}/"
+        + RDIR + "solved_scenario_{id}.nc",
+    log:
+        solver=normpath(
+            "logs/"
+            + RDIR
+            + "solve_network/solved_scenario_{id}_solver.log"
+        ),
+        python="logs/"
+        + RDIR
+        + "solve_network/solved_scenario_{id}_python.log",
+        memory="logs/"
+        + RDIR
+        + "solve_network/solved_scenario_{id}_memory.log",
+    benchmark:
+        (
+            "benchmarks/"
+            + RDIR
+            + "solve_network/solved_scenario_{id}"
+        )
+    threads: 4
     shadow:
         "minimal"
     script:

@@ -28,6 +28,8 @@ gurobi.log
 /data/shipdensity_global.zip
 /data/bundle
 /dask-worker-space
+/scenarios
+/scenarios copy
 
 doc/_build
 

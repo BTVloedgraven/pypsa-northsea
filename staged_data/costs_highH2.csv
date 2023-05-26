@@ -86,11 +86,11 @@ electrolysis,2050,investment,395.0,EUR/kWel,https://iea.blob.core.windows.net/as
 electrolysis,2050,FOM,1.5,%/year,BEIS 21
 electrolysis,2050,lifetime,20.0,years,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis,2050,efficiency,0.8,per unit,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
-electrolysis offshore,2040,investment,800,EUR/kWel,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
+electrolysis offshore,2040,investment,880,EUR/kWel,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis offshore,2040,FOM,1.5,%/year,BEIS 21
 electrolysis offshore,2040,lifetime,20.0,years,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis offshore,2040,efficiency,0.75,per unit,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
-electrolysis offshore,2050,investment,500,EUR/kWel,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
+electrolysis offshore,2050,investment,550,EUR/kWel,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis offshore,2050,FOM,2.0,%/year,BEIS 21
 electrolysis offshore,2050,lifetime,20.0,years,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
 electrolysis offshore,2050,efficiency,0.8,per unit,https://iea.blob.core.windows.net/assets/9e3a3493-b9a6-4b7d-b499-7ca48e357561/The_Future_of_Hydrogen.pdf
@@ -118,7 +118,7 @@ H2 pipeline offshore,2040,investment,350.0,EUR/MW/km,Gas for Climate large pipe 
 H2 pipeline offshore,2040,lifetime,40.0,years,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
 H2 pipeline offshore,2040,FOM,5.0,%/year,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
 H2 pipeline offshore,2040,efficiency,0.98,per unit,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
-H2 pipeline offshore,2050,investment,350.0,EUR/MW/km,Gas for Climate large pipe 60/40 reporpose/new https://gasforclimate2050.eu/wp-content/uploads/2022/04/EHB-A-European-hydrogen-infrastructure-vision-covering-28-countries.pdf
+H2 pipeline offshore,2050,investment,385.0,EUR/MW/km,Gas for Climate large pipe 60/40 reporpose/new https://gasforclimate2050.eu/wp-content/uploads/2022/04/EHB-A-European-hydrogen-infrastructure-vision-covering-28-countries.pdf
 H2 pipeline offshore,2050,lifetime,40.0,years,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
 H2 pipeline offshore,2050,FOM,5.0,%/year,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
 H2 pipeline offshore,2050,efficiency,0.98,per unit,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
@@ -221,9 +221,9 @@ offwind-dc-station,2040,investment,400.0,EUR/kWel,Haertel 2017; assuming one ons
 offwind-ac-connection-submarine,2050,investment,2685.0,EUR/MW/km,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
 offwind-ac-connection-underground,2050,investment,1342.0,EUR/MW/km,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
 offwind-ac-station,2050,investment,250.0,EUR/kWel,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
-offwind-dc-connection-submarine,2050,investment,1430.0,EUR/MW/km,Table 1: https://www.researchgate.net/publication/291554198_Optioneering_analysis_for_connecting_Dogger_Bank_offshore_wind_farms_to_the_GB_electricity_network
-offwind-dc-connection-underground,2050,investment,1100.0,EUR/MW/km,Haertel 2017; average + 13% learning reduction
-offwind-dc-station,2050,investment,440.0,EUR/kWel,Haertel 2017; assuming one onshore and one offshore node + 13% learning reduction
+offwind-dc-connection-submarine,2050,investment,1300.0,EUR/MW/km,Table 1: https://www.researchgate.net/publication/291554198_Optioneering_analysis_for_connecting_Dogger_Bank_offshore_wind_farms_to_the_GB_electricity_network
+offwind-dc-connection-underground,2050,investment,1000.0,EUR/MW/km,Haertel 2017; average + 13% learning reduction
+offwind-dc-station,2050,investment,400.0,EUR/kWel,Haertel 2017; assuming one onshore and one offshore node + 13% learning reduction
 oil,2030,lifetime,30.0,years,ECF2010 in DIW DataDoc http://hdl.handle.net/10419/80348
 oil,2030,investment,400.0,EUR/kWel,DIW DataDoc http://hdl.handle.net/10419/80348
 oil,2030,FOM,1.5,%/year,DIW DataDoc http://hdl.handle.net/10419/80348
