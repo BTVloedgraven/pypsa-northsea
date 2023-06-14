@@ -31,14 +31,14 @@ focus_weights:
   'GB' : 0.20
 
 mesh_offshore_region:
-  threshold: 5000
+  threshold: EEZ
 
 offshore_options:
   radial: all
-  ac-grid: 1
+  ac-grid: 0
   dc-grid: 1
   offshore-electrolysis: 1
-  offshore-h2-pipelines: 1
+  offshore-h2-pipelines: all
   onshore-connection-buses: ["NL1 0", "NL1 1", "NL1 3", "NL1 4", "DE1 4", "DK1 0", "NO2 0", "GB0 0", "GB0 1", "BE1 1"]
 
 snapshots:
@@ -320,7 +320,7 @@ solving:
     AggFill: 0
     PreDual: 0
     GURO_PAR_BARDENSETHRESH: 200
-    # NodeMethod: 2
+    NodeMethod: 2
   # solver:
   #   name: cplex
   #   threads: 4

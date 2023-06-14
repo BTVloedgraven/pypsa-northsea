@@ -277,7 +277,7 @@ def attach_stores(n, costs, elec_opts):
         )
 
 
-def attach_hydrogen_pipelines(n, costs, elec_opts, offshore_grid, offshore_grid):
+def attach_hydrogen_pipelines(n, costs, elec_opts, offshore_grid, all_radial_connections):
     ext_carriers = elec_opts["extendable_carriers"]
     as_stores = ext_carriers.get("Store", [])
 
@@ -297,6 +297,8 @@ def attach_hydrogen_pipelines(n, costs, elec_opts, offshore_grid, offshore_grid)
          n.links.loc[~n.links.bus0.str.contains("off") & ~n.links.bus1.str.contains("off") & n.links.length != 0][attrs],
          offshore_grid]
     ).reset_index(drop=True)
+    if snakemake.config['offshore_options'].get('offshore-h2-pipelines', '1') == "all":
+        candidates = pd.concat([candidates, all_radial_connections]).reset_index(drop=True)
 
     # remove bus pair duplicates regardless of order of bus0 and bus1
     h2_links = candidates[
@@ -404,17 +406,13 @@ def add_DC_connections(
     offshore_grid,
     all_radial_connections,
 ):
-    coords = n.buses.loc[n.buses.index.str.contains("off" and "DC"), ["x", "y"]]
+    links_df = offshore_grid.copy().reset_index(drop=True)
+    if snakemake.config['offshore_options'].get('radial', 'direct') == "all":
+        links_df = pd.concat([links_df, all_radial_connections]).reset_index(drop=True)
+    
+    links_df['bus0'] = links_df['bus0'].apply(lambda x: x + " DC" if "off" in x else x)
+    links_df['bus1'] = links_df['bus1'].apply(lambda x: x + " DC" if "off" in x else x)
 
-    # works better than with closest neighbors. maybe only create graph like this for offshore buses:
-    cells, generators = libpysal.cg.voronoi_frames(
-        coords.values, clip="convex hull"
-    )
-    delaunay = libpysal.weights.Rook.from_dataframe(cells)
-    offshore_link_graph = delaunay.to_networkx()
-    offshore_link_graph = nx.relabel_nodes(
-        offshore_link_graph, dict(zip(offshore_link_graph, coords.index))
-    )
 
     links_df = links_df[
         ~pd.DataFrame(np.sort(links_df[["bus0", "bus1"]])).duplicated()
@@ -461,7 +459,6 @@ def all_radial_connections(
         axis=1,
     )
     links_df.drop(links_df.query("length==0").index, inplace=True)
-
     return links_df
 
 def calculate_annuity(n, r):
@@ -730,7 +727,7 @@ if __name__ == "__main__":
                 all_radial_connections,
             )
 
-    attach_hydrogen_pipelines(n, costs, elec_config, offshore_grid)
+    attach_hydrogen_pipelines(n, costs, elec_config, offshore_grid, all_radial_connections,)
 
     add_nice_carrier_names(n, snakemake.config)
 

@@ -162,6 +162,21 @@ def get_efficiencies(n, h2_gens_2_links):
             })
     return efficencies
 
+def add_offshore_constraint(n, config):
+    attr = n.components["Generator"]["list_name"]
+    t_df = getattr(n, attr)
+    offshore = t_df.bus.str.contains("off")
+    p_nom_northsea = pd.DataFrame(
+        {
+            "p_nom": linexpr((1, get_var(n, "Generator", "p_nom"))),
+            "offshore": offshore
+        }
+    ).dropna(subset=["p_nom"]).groupby(["offshore"]).p_nom.apply(join_exprs)[True]
+    
+    minconstraint = define_constraints(
+        n, p_nom_northsea, ">=", 300_000, "agg_p_nom", "min"
+    )
+
 def add_CCL_constraints(n, config):
     agg_p_nom_limits = snakemake.input[1]
 
@@ -248,45 +263,6 @@ def add_CCL_constraints(n, config):
                 maxconstraint = define_constraints(
                     n, p_nom_per_cc[maximum.index], "<=", maximum, "agg_p_nom", "max"
                 )
-
-def add_CCL_constraints_default(n, config):
-    try:
-        agg_p_nom_minmax = pd.read_csv(snakemake.input[1], index_col=list(range(2)))
-    except IOError:
-        logger.exception(
-            "Need to specify the path to a .csv file containing "
-            "aggregate capacity limits per country in "
-            "config['electricity']['agg_p_nom_limit']."
-        )
-    logger.info(
-        "Adding per carrier generation capacity constraints for " "individual countries"
-    )
-
-    gen_country = n.generators.bus.map(n.buses.country)
-    # cc means country and carrier
-    p_nom_per_cc = (
-        pd.DataFrame(
-            {
-                "p_nom": linexpr((1, get_var(n, "Generator", "p_nom"))),
-                "country": gen_country,
-                "carrier": n.generators.carrier,
-            }
-        )
-        .dropna(subset=["p_nom"])
-        .groupby(["country", "carrier"])
-        .p_nom.apply(join_exprs)
-    )
-    minimum = agg_p_nom_minmax["min"].dropna()
-    if not minimum.empty:
-        minconstraint = define_constraints(
-            n, p_nom_per_cc[minimum.index], ">=", minimum, "agg_p_nom", "min"
-        )
-    maximum = agg_p_nom_minmax["max"].dropna()
-    if not maximum.empty:
-        maxconstraint = define_constraints(
-            n, p_nom_per_cc[maximum.index], "<=", maximum, "agg_p_nom", "max"
-        )
-
 
 def add_EQ_constraints(n, o, scaling=1e-1):
     float_regex = "[0-9]*\.?[0-9]+"
@@ -461,6 +437,7 @@ def extra_functionality(n, snapshots):
         add_SAFE_constraints(n, config)
     if "CCL" in opts and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
+    # add_offshore_constraint(n,config)
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
