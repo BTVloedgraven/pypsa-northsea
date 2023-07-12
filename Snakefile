@@ -537,46 +537,6 @@ rule cluster_network:
     script:
         "scripts/cluster_network.py"
 
-rule add_offshore_connections:
-    input:
-        network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
-        tech_costs=COSTS,
-    output:
-        network="networks/" + RDIR + "elec_s{simpl}_{clusters}_off.nc",
-    log:
-        "logs/" + RDIR + "add_offshore_connections/elec_s{simpl}_{clusters}_off.nc",
-    benchmark:
-        "benchmarks/" + RDIR + "add_offshore_connections/elec_s{simpl}_{clusters}_off.nc",
-    threads: 1
-    resources:
-        mem_mb=4000,
-    script:
-        "scripts/add_offshore_connections.py"
-
-
-rule build_offshore_grid:
-    input:
-        country_shapes="resources/" + RDIR + "country_shapes.geojson",
-        onshore_regions="resources/" + RDIR + "regions_onshore.geojson",
-        offshore_regions="resources/" + RDIR + "regions_offshore.geojson",
-        offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
-        busmap_offshore="resources/" + RDIR + "busmap_offshore.csv",
-        network="networks/" + RDIR + "elec.nc",
-        north_sea_shape="resources/" + RDIR + "north_sea.geojson",
-        tech_costs=COSTS,
-    output:
-        network="networks/" + RDIR + "elec_off-{offgrid}.nc",
-    log:
-        "logs/"
-        + RDIR
-        + "build_offshore_grid/elec_off-{offgrid}.log",
-    threads: 1
-    resources:
-        mem_mb=1000,
-    script:
-        "scripts/build_offshore_grid.py"
-
-
 rule add_extra_components:
     input:
         network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",

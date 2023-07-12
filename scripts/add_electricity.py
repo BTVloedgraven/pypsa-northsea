@@ -521,74 +521,6 @@ def move_generators(
         n.generators.loc[move_generators.index, "turbine_cost"]
     )
 
-def add_offshore_connections(
-    n,
-    costs,
-):
-    # Create line for every offshore bus and connect it to onshore buses
-    onshore_coords = n.buses.loc[~n.buses.index.str.contains("off"), ["x", "y"]]
-    offshore_coords = n.buses.loc[n.buses.index.str.contains("off"), ["x", "y"]]
-
-    tree = BallTree(
-        np.radians(offshore_coords), leaf_size=40, metric="haversine"
-    )
-
-    coords = pd.concat([onshore_coords, offshore_coords])
-    coords["xy"] = list(map(tuple, (coords[["x", "y"]]).values))
-
-    # works better than with closest neighbors. maybe only create graph like this for offshore buses:
-    cells, generators = libpysal.cg.voronoi_frames(
-        offshore_coords.values, clip="convex hull"
-    )
-    delaunay = libpysal.weights.Rook.from_dataframe(cells)
-    offshore_line_graph = delaunay.to_networkx()
-    offshore_line_graph = nx.relabel_nodes(
-        offshore_line_graph, dict(zip(offshore_line_graph, offshore_coords.index))
-    )
-
-    offshore_lines = nx.to_pandas_edgelist(offshore_line_graph)
-
-    _, ind = tree.query(np.radians(onshore_coords), k=1)
-    # Build line graph to connect all offshore nodes and
-    on_line_graph = nx.Graph()
-    for i, bus in enumerate(onshore_coords.index):
-        for j in range(ind.shape[1]):
-            bus1 = offshore_coords.index[ind[i, j]]
-            on_line_graph.add_edge(bus, bus1)
-
-    onshore_lines = nx.to_pandas_edgelist(on_line_graph)
-
-    lines_df = pd.concat([offshore_lines, onshore_lines], axis=0, ignore_index=True)
-
-    lines_df = lines_df.rename(
-        columns={"source": "bus0", "target": "bus1", "weight": "length"}
-    ).astype({"bus0": "string", "bus1": "string", "length": "float"})
-
-    lines_df.loc[:, "length"] = lines_df.apply(
-        lambda x: geodesic(coords.loc[x.bus0, "xy"], coords.loc[x.bus1, "xy"]).km,
-        axis=1,
-    )
-    lines_df.drop(lines_df.query("length==0").index, inplace=True)
-    lines_df.index = "off_" + lines_df.index.astype("str")
-
-    n.madd(
-        "Line",
-        names=lines_df.index,
-        v_nom=220,
-        bus0=lines_df["bus0"].values,
-        bus1=lines_df["bus1"].values,
-        length=lines_df["length"].values,
-    )
-    # attach cable cost AC for offshore grid lines
-    line_length_factor = snakemake.config["lines"]["length_factor"]
-    cable_cost = n.lines.loc[lines_df.index, "length"].apply(
-        lambda x: x
-        * line_length_factor
-        * costs.at["offwind-ac-connection-submarine", "capital_cost"]
-        + costs.at["offwind-ac-station", "capital_cost"]
-    )
-    n.lines.loc[lines_df.index, "capital_cost"] = cable_cost
-
 def attach_conventional_generators(
     n,
     costs,
@@ -1048,11 +980,6 @@ if __name__ == "__main__":
         snakemake.input.offshore_regions, 
         snakemake.input.busmap_offshore,
     )
-
-    # add_offshore_connections(
-    #     n,
-    #     costs,
-    # )
 
     if "estimate_renewable_capacities" not in snakemake.config["electricity"]:
         logger.warning(

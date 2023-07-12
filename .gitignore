@@ -29,7 +29,6 @@ gurobi.log
 /data/bundle
 /dask-worker-space
 /scenarios
-/scenarios copy
 
 doc/_build
 
