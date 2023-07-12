@@ -10,7 +10,8 @@ gurobi.log
 .vscode
 
 /bak
-/resources
+/resources/*
+!resources/northsea.geojson
 /results
 /networks
 /benchmarks
